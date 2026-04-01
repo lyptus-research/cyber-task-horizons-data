@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "company": "anthropic",
+    "updated": "2026-03-12",
+    "description": "Anthropic Claude model family. Thinking config is used by the CLI bench command to auto-inject GenerateConfig parameters at submission time."
+  },
+  "models": [
+    {
+      "provider": "anthropic",
+      "model_name": "claude-haiku-4-5",
+      "full_name": "anthropic/claude-haiku-4-5",
+      "release_date": "2025-10-01",
+      "max_output_tokens": 8192,
+      "max_connections": 1,
+      "description": "Claude Haiku 4.5 - fast and cheap, used for infrastructure validation only",
+      "alias": "Claude Haiku 4.5"
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-3-opus-20240229",
+      "full_name": "anthropic/claude-3-opus-20240229",
+      "release_date": "2024-02-29",
+      "max_output_tokens": 4096,
+      "max_connections": 3,
+      "description": "Claude 3 Opus - Anthropic's most capable Claude 3 model",
+      "alias": "Claude 3 Opus"
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-3-5-sonnet-20241022",
+      "full_name": "anthropic/claude-3-5-sonnet-20241022",
+      "release_date": "2024-10-22",
+      "max_output_tokens": 8192,
+      "description": "Claude 3.5 Sonnet (Oct snapshot) - incremental upgrade",
+      "alias": "Claude 3.5 Sonnet"
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-opus-4-20250514",
+      "full_name": "anthropic/claude-opus-4-20250514",
+      "release_date": "2025-05-14",
+      "max_output_tokens": 8192,
+      "description": "Claude Opus 4 - Anthropic's frontier-level model",
+      "alias": "Claude Opus 4",
+      "thinking": {
+        "reasoning_tokens": 16000
+      }
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-sonnet-4-5-20250929",
+      "full_name": "anthropic/claude-sonnet-4-5-20250929",
+      "release_date": "2025-09-29",
+      "max_output_tokens": 8192,
+      "description": "Claude Sonnet 4.5",
+      "alias": "Claude Sonnet 4.5",
+      "thinking": {
+        "reasoning_tokens": 16000
+      }
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-sonnet-4-6",
+      "full_name": "anthropic/claude-sonnet-4-6",
+      "release_date": "2026-02-17",
+      "max_output_tokens": 64000,
+      "description": "Claude Sonnet 4.6 - adaptive thinking",
+      "alias": "Claude Sonnet 4.6",
+      "thinking": {
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "provider": "anthropic",
+      "model_name": "claude-opus-4-6",
+      "full_name": "anthropic/claude-opus-4-6",
+      "release_date": "2026-02-05",
+      "max_output_tokens": 128000,
+      "description": "Claude Opus 4.6 - Anthropic's most capable model, adaptive thinking",
+      "alias": "Claude Opus 4.6",
+      "thinking": {
+        "reasoning_effort": "xhigh"
+      }
+    }
+  ]
+}

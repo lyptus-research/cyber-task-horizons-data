@@ -1,0 +1,131 @@
+{
+  "metadata": {
+    "company": "openai",
+    "updated": "2026-03-12",
+    "description": "OpenAI GPT and o-series model family. Thinking config is used by the CLI bench command to auto-inject GenerateConfig parameters at submission time."
+  },
+  "models": [
+    {
+      "provider": "openai",
+      "model_name": "gpt-4-0314",
+      "full_name": "openai/gpt-4-0314",
+      "release_date": "2023-03-14",
+      "max_output_tokens": 8192,
+      "description": "GPT-4 initial 8K context release",
+      "alias": "GPT-4"
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-4o-2024-05-13",
+      "full_name": "openai/gpt-4o-2024-05-13",
+      "release_date": "2024-05-13",
+      "max_output_tokens": 4096,
+      "description": "GPT-4o initial release - multimodal, no reasoning",
+      "alias": "GPT-4o (May 2024)"
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-4o-2024-08-06",
+      "full_name": "openai/gpt-4o-2024-08-06",
+      "release_date": "2024-08-06",
+      "max_output_tokens": 16384,
+      "description": "GPT-4o Aug update - increased output tokens to 16K",
+      "alias": "GPT-4o"
+    },
+    {
+      "provider": "openai",
+      "model_name": "o1-2024-12-17",
+      "full_name": "openai/o1-2024-12-17",
+      "release_date": "2024-12-17",
+      "max_output_tokens": 100000,
+      "working_limit": 7200,
+      "description": "o1 - reasoning model with configurable effort",
+      "alias": "o1",
+      "thinking": {
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "provider": "openai",
+      "model_name": "o3-2025-04-16",
+      "full_name": "openai/o3-2025-04-16",
+      "release_date": "2025-04-16",
+      "max_output_tokens": 8192,
+      "working_limit": 7200,
+      "description": "o3 - flagship reasoning model with tool-use & vision",
+      "alias": "o3",
+      "thinking": {
+        "reasoning_effort": "high",
+        "reasoning_summary": "detailed"
+      }
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5-2025-08-07",
+      "full_name": "openai/gpt-5-2025-08-07",
+      "release_date": "2025-08-07",
+      "max_output_tokens": 128000,
+      "description": "GPT-5",
+      "alias": "GPT-5",
+      "thinking": {
+        "reasoning_effort": "high",
+        "reasoning_summary": "detailed"
+      }
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5.1-2025-11-13",
+      "full_name": "openai/gpt-5.1-2025-11-13",
+      "release_date": "2025-11-13",
+      "max_output_tokens": 128000,
+      "description": "GPT-5.1 - reasoning OFF by default, must explicitly enable",
+      "alias": "GPT-5.1",
+      "thinking": {
+        "reasoning_effort": "high",
+        "reasoning_summary": "detailed"
+      }
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5.1-codex-max",
+      "full_name": "openai/gpt-5.1-codex-max",
+      "release_date": "2025-11-13",
+      "max_output_tokens": 128000,
+      "description": "GPT-5.1 Codex Max - reasoning OFF by default, requires prompt_style=research for refusal mitigation",
+      "alias": "GPT-5.1 Codex Max",
+      "thinking": {
+        "reasoning_effort": "xhigh",
+        "reasoning_summary": "detailed"
+      },
+      "prompt_style": "research"
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5.2-codex",
+      "full_name": "openai/gpt-5.2-codex",
+      "release_date": "2025-12-18",
+      "max_output_tokens": 128000,
+      "description": "GPT-5.2 Codex - upgraded GPT-5.2 optimized for agentic coding. 400K context, xhigh reasoning. $1.75/$14 per 1M tokens.",
+      "alias": "GPT-5.2 Codex",
+      "thinking": {
+        "reasoning_effort": "xhigh",
+        "reasoning_summary": "detailed"
+      },
+      "prompt_style": "research"
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5.3-codex",
+      "full_name": "openai/gpt-5.3-codex",
+      "release_date": "2026-02-05",
+      "max_output_tokens": 128000,
+      "description": "GPT-5.3 Codex - reasoning OFF by default, requires prompt_style=research for refusal mitigation",
+      "alias": "GPT-5.3 Codex",
+      "thinking": {
+        "reasoning_effort": "xhigh",
+        "reasoning_summary": "detailed"
+      },
+      "prompt_style": "research"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "company": "other",
+    "updated": "2026-01-05",
+    "description": "Models from smaller labs accessed via Together AI and other providers"
+  },
+  "models": [
+    {
+      "provider": "together",
+      "model_name": "zai-org/GLM-4.5-Air-FP8",
+      "full_name": "together/zai-org/GLM-4.5-Air-FP8",
+      "release_date": "2025-01-15",
+      "max_output_tokens": 8192,
+      "description": "Zhipu AI GLM-4.5 Air (FP8 quantized) via Together AI",
+      "alias": "GLM 4.5 Air"
+    },
+    {
+      "provider": "together",
+      "model_name": "zai-org/GLM-4.6",
+      "full_name": "together/zai-org/GLM-4.6",
+      "release_date": "2025-03-01",
+      "max_output_tokens": 8192,
+      "description": "Zhipu AI GLM-4.6 via Together AI",
+      "alias": "GLM 4.6"
+    },
+    {
+      "provider": "together",
+      "model_name": "moonshotai/Kimi-K2-Instruct",
+      "full_name": "together/moonshotai/Kimi-K2-Instruct",
+      "release_date": "2025-07-10",
+      "max_output_tokens": 8192,
+      "description": "Moonshot AI KIMI K2 instruction-tuned model via Together AI (256K context)",
+      "alias": "KIMI K2 Instruct"
+    },
+    {
+      "provider": "together",
+      "model_name": "moonshotai/Kimi-K2-Thinking",
+      "full_name": "together/moonshotai/Kimi-K2-Thinking",
+      "release_date": "2025-07-10",
+      "max_output_tokens": 8192,
+      "description": "Moonshot AI KIMI K2 extended thinking/reasoning variant via Together AI",
+      "alias": "KIMI K2 Thinking"
+    },
+    {
+      "provider": "together",
+      "model_name": "zai-org/GLM-5",
+      "full_name": "together/zai-org/GLM-5",
+      "release_date": "2026-02-12",
+      "max_output_tokens": 32768,
+      "max_connections": 25,
+      "description": "Zhipu AI GLM-5 (744B MoE, ~40B active) via Together AI. First Chinese frontier model in study. FP4 quantized.",
+      "alias": "GLM-5"
+    },
+    {
+      "provider": "together",
+      "model_name": "deepseek-ai/DeepSeek-V3.1",
+      "full_name": "together/deepseek-ai/DeepSeek-V3.1",
+      "release_date": "2025-09-05",
+      "max_output_tokens": 32768,
+      "max_connections": 25,
+      "description": "DeepSeek V3.1 (684.5B MoE) via Together AI. 131K context. $0.60/$1.70 per 1M tokens.",
+      "alias": "DeepSeek V3.1"
+    }
+  ]
+}

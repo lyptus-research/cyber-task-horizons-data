@@ -1,0 +1,40 @@
+{
+  "full_range": {
+    "exponential": {
+      "r_squared": 0.949,
+      "doubling_time_months": 9.8
+    },
+    "linear": {
+      "r_squared": 0.372
+    },
+    "hyperbolic": {
+      "r_squared": 0.877,
+      "singularity": "February 2026"
+    },
+    "logistic": {
+      "r_squared": 0.91,
+      "ceiling_minutes": 19024.532467993646,
+      "ceiling_display": "13.2d",
+      "inflection_date": "October 2026"
+    }
+  },
+  "zoomed_2024": {
+    "exponential": {
+      "r_squared": 0.89,
+      "doubling_time_months": 5.7
+    },
+    "linear": {
+      "r_squared": 0.44
+    },
+    "hyperbolic": {
+      "r_squared": 0.9,
+      "singularity": "March 2026"
+    },
+    "logistic": {
+      "r_squared": 0.88,
+      "ceiling_minutes": 19024.532473686795,
+      "ceiling_display": "13.2d",
+      "inflection_date": "October 2026"
+    }
+  }
+}

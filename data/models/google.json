@@ -1,0 +1,110 @@
+{
+  "metadata": {
+    "company": "google",
+    "updated": "2026-03-12",
+    "description": "Google Gemini model family. Thinking config: Gemini 2.5 models use reasoning_tokens=-1 for explicit dynamic thinking. Gemini 3+ models use reasoning_effort mapped to thinking_level via the Inspect Google provider. max_output_tokens is validated by hte validate against the raw API request."
+  },
+  "models": [
+    {
+      "provider": "google",
+      "model_name": "gemini-1.0-pro-001",
+      "full_name": "google/gemini-1.0-pro-001",
+      "release_date": "2023-12-06",
+      "max_output_tokens": 8192,
+      "description": "Gemini 1.0 Pro - first public Gemini model",
+      "alias": "Gemini 1.0 Pro"
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-1.5-pro-001",
+      "full_name": "google/gemini-1.5-pro-001",
+      "release_date": "2024-02-15",
+      "max_output_tokens": 8192,
+      "description": "Gemini 1.5 Pro - 1M-token context",
+      "alias": "Gemini 1.5 Pro"
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-2.0-flash-20240520",
+      "full_name": "google/gemini-2.0-flash-20240520",
+      "release_date": "2024-05-20",
+      "max_output_tokens": 8192,
+      "description": "Gemini 2.0 Flash - low-latency variant",
+      "alias": "Gemini 2.0 Flash"
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-2.5-pro-preview-20250506",
+      "full_name": "google/gemini-2.5-pro-preview-20250506",
+      "release_date": "2025-05-06",
+      "max_output_tokens": 65536,
+      "description": "Gemini 2.5 Pro (I/O preview) - always-on thinking, dynamic budget",
+      "alias": "Gemini 2.5 Pro (May 2025)",
+      "thinking": {
+        "reasoning_tokens": -1
+      }
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-2.5-flash-preview-20250520",
+      "full_name": "google/gemini-2.5-flash-preview-20250520",
+      "release_date": "2025-05-20",
+      "max_output_tokens": 65536,
+      "description": "Gemini 2.5 Flash preview - dynamic thinking budget",
+      "alias": "Gemini 2.5 Flash",
+      "thinking": {
+        "reasoning_tokens": -1
+      }
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-2.5-pro",
+      "full_name": "google/gemini-2.5-pro",
+      "release_date": "2025-06-05",
+      "max_output_tokens": 65536,
+      "max_connections": 8,
+      "description": "Gemini 2.5 Pro GA - always-on thinking, dynamic budget",
+      "alias": "Gemini 2.5 Pro (June 2025)",
+      "thinking": {
+        "reasoning_tokens": -1
+      }
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-3-flash-preview",
+      "full_name": "google/gemini-3-flash-preview",
+      "release_date": "2025-06-05",
+      "max_output_tokens": 65536,
+      "description": "Gemini 3 Flash - configurable thinking via thinking_level",
+      "alias": "Gemini 3 Flash",
+      "thinking": {
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-3-pro-preview",
+      "full_name": "google/gemini-3-pro-preview",
+      "release_date": "2025-11-18",
+      "max_output_tokens": 65536,
+      "description": "SHUT DOWN 2026-03-09. Replaced by gemini-3.1-pro-preview.",
+      "alias": "Gemini 3 Pro (deprecated)",
+      "thinking": {
+        "reasoning_effort": "high"
+      }
+    },
+    {
+      "provider": "google",
+      "model_name": "gemini-3.1-pro-preview",
+      "full_name": "google/gemini-3.1-pro-preview",
+      "release_date": "2026-02-19",
+      "max_output_tokens": 65536,
+      "max_connections": 4,
+      "description": "Gemini 3.1 Pro - replaces gemini-3-pro-preview. Always-on thinking, thinking_level configurable. Also available as gemini-3.1-pro-preview-customtools (optimized for agentic workflows with bash and custom tools).",
+      "alias": "Gemini 3.1 Pro",
+      "thinking": {
+        "reasoning_effort": "high"
+      }
+    }
+  ]
+}

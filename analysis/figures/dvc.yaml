@@ -1,0 +1,1308 @@
+vars:
+  # cairosvg requires libcairo; on macOS (Homebrew) it lives outside the default
+  # linker search path. Set to empty string on Linux or CI where libcairo is in
+  # the standard path.
+  - dyld_prefix: "DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib"
+
+stages:
+  # ===========================================================================
+  # Stage 0: Snapshot human study data from production API
+  # ===========================================================================
+  # Frozen — run manually: dvc repro -s snapshot_human_data
+  # Requires HTE_USERNAME and HTE_PASSWORD env vars.
+  snapshot_human_data:
+    cmd: python -m figures.stages.snapshot_human_data --output figures/data/human_snapshot.json
+    wdir: ..
+    deps:
+      - figures/stages/snapshot_human_data.py
+      - lib/api.py
+      - lib/corrections.py
+    outs:
+      - figures/data/human_snapshot.json
+    frozen: true
+
+  # ===========================================================================
+  # Stage 1: Prepare all runs DataFrames
+  # ===========================================================================
+  prepare_runs:
+    frozen: true
+    cmd: python -m figures.stages.prepare_runs
+      --human-snapshot figures/data/human_snapshot.json
+      --output-dir figures/data
+    wdir: ..
+    deps:
+      - figures/stages/prepare_runs.py
+      - lib/results.py
+      - lib/corrections.py
+      - lib/eval_sets.py
+      - lib/data.py
+      - lib/constants.py
+      - lib/trendline.py
+      - figures/data/human_snapshot.json
+    params:
+      - figures/params.yaml:
+        - irt.regularization
+    outs:
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/best_available_times.json
+
+  # ===========================================================================
+  # Stage 2: Bootstrap (SLOW)
+  # ===========================================================================
+  # Four combinations: {runs, runs_human} x {2M, 1M}
+
+  bootstrap_runs_human_2M:
+    cmd: python -m figures.stages.bootstrap
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --token-budget null
+      --n-bootstrap ${bootstrap.n_iterations}
+      --output figures/data/bootstrap/runs_human_2M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/bootstrap.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - bootstrap
+        - irt.regularization
+    outs:
+      - figures/data/bootstrap/runs_human_2M.parquet
+
+  bootstrap_runs_human_1M:
+    cmd: python -m figures.stages.bootstrap
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --token-budget 1000000
+      --n-bootstrap ${bootstrap.n_iterations}
+      --output figures/data/bootstrap/runs_human_1M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/bootstrap.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - bootstrap
+        - irt.regularization
+    outs:
+      - figures/data/bootstrap/runs_human_1M.parquet
+
+  bootstrap_runs_2M:
+    cmd: python -m figures.stages.bootstrap
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col model_estimate_minutes
+      --token-budget null
+      --n-bootstrap ${bootstrap.n_iterations}
+      --output figures/data/bootstrap/runs_2M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/bootstrap.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - bootstrap
+        - irt.regularization
+    outs:
+      - figures/data/bootstrap/runs_2M.parquet
+
+  bootstrap_runs_1M:
+    cmd: python -m figures.stages.bootstrap
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col model_estimate_minutes
+      --token-budget 1000000
+      --n-bootstrap ${bootstrap.n_iterations}
+      --output figures/data/bootstrap/runs_1M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/bootstrap.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - bootstrap
+        - irt.regularization
+    outs:
+      - figures/data/bootstrap/runs_1M.parquet
+
+  # ===========================================================================
+  # Stage 2a-10M: GPT-5.3 Codex at 10M tokens (for bootstrapped CI)
+  # ===========================================================================
+  # Produces a modified model_runs with GPT-5.3 failures flipped where the
+  # 10M re-run passed, then bootstraps + fits for proper CIs.
+
+  prepare_10m_variant:
+    cmd: python -m figures.stages.prepare_10m_variant
+      --model-runs figures/data/model_runs.parquet
+      --ten-m-cache figures/data/10m_samples.pkl
+      --output figures/data/model_runs_gpt53_10M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/prepare_10m_variant.py
+      - figures/data/model_runs.parquet
+      - figures/data/10m_samples.pkl
+    outs:
+      - figures/data/model_runs_gpt53_10M.parquet
+
+  bootstrap_runs_human_2M_gpt53_10M:
+    cmd: python -m figures.stages.bootstrap
+      --model-runs figures/data/model_runs_gpt53_10M.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --token-budget null
+      --n-bootstrap ${bootstrap.n_iterations}
+      --output figures/data/bootstrap/runs_human_2M_gpt53_10M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/bootstrap.py
+      - lib/data.py
+      - figures/data/model_runs_gpt53_10M.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - bootstrap
+        - irt.regularization
+    outs:
+      - figures/data/bootstrap/runs_human_2M_gpt53_10M.parquet
+
+  fit_summaries_human_2M_gpt53_10M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.fit_summaries
+      --model-runs figures/data/model_runs_gpt53_10M.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --bootstrap figures/data/bootstrap/runs_human_2M_gpt53_10M.parquet
+      --output figures/data/model_summaries_human_2M_gpt53_10M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/fit_summaries.py
+      - figures/stages/_sota.py
+      - lib/data.py
+      - figures/data/model_runs_gpt53_10M.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/bootstrap/runs_human_2M_gpt53_10M.parquet
+    params:
+      - figures/params.yaml:
+        - irt.regularization
+    outs:
+      - figures/data/model_summaries_human_2M_gpt53_10M.parquet
+
+  # ===========================================================================
+  # Stage 2b: Headline fit_summaries + fit_trendline (trunk)
+  # ===========================================================================
+  # These produce the model_summaries and trendline_params that downstream
+  # stages (sensitivity_comparison, paper_stats, trendline_combined) depend on.
+
+  fit_summaries_human_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.fit_summaries
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --output figures/data/model_summaries_human_2M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/fit_summaries.py
+      - figures/stages/_sota.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - irt.regularization
+    outs:
+      - figures/data/model_summaries_human_2M.parquet
+
+  fit_summaries_runs_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.fit_summaries
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col model_estimate_minutes
+      --bootstrap figures/data/bootstrap/runs_2M.parquet
+      --output figures/data/model_summaries_runs_2M.parquet
+    wdir: ..
+    deps:
+      - figures/stages/fit_summaries.py
+      - figures/stages/_sota.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/bootstrap/runs_2M.parquet
+    params:
+      - figures/params.yaml:
+        - irt.regularization
+    outs:
+      - figures/data/model_summaries_runs_2M.parquet
+
+  fit_trendline_human_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.fit_trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --output figures/data/trendline_params_human_2M.json
+    wdir: ..
+    deps:
+      - figures/stages/fit_trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    outs:
+      - figures/data/trendline_params_human_2M.json
+
+  # ===========================================================================
+  # Stage 3: Figures (all fast)
+  # ===========================================================================
+
+  # --- IRT logistic fit grids ---
+  irt_grid_runs:
+    cmd: python -m figures.stages.irt_grid
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col model_estimate_minutes
+      --title-label "Model-Estimated Task Length"
+      --output figures/out/irt_grid_runs.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - irt_grid
+        - output
+    plots:
+      - figures/out/irt_grid_runs.png:
+          cache: false
+
+  irt_grid_runs_human:
+    cmd: python -m figures.stages.irt_grid
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --title-label "Human-Derived Task Length"
+      --output figures/out/irt_grid_runs_human.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - irt_grid
+        - output
+    plots:
+      - figures/out/irt_grid_runs_human.png:
+          cache: false
+
+  # --- Trendlines: P50 ---
+  trendline_p50_runs_human_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --token-budget null
+      --success-percent 50
+      --title-label "Human-Derived"
+      --output figures/out/trendline_p50_runs_human_2M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_human_2M.png:
+          cache: false
+
+  trendline_p50_runs_human_1M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_1M.parquet
+      --token-budget 1000000
+      --success-percent 50
+      --title-label "Human-Derived"
+      --output figures/out/trendline_p50_runs_human_1M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_1M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_human_1M.png:
+          cache: false
+
+  trendline_p50_runs_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_runs_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_2M.parquet
+      --token-budget null
+      --success-percent 50
+      --title-label "Model-Estimated"
+      --output figures/out/trendline_p50_runs_2M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_runs_2M.parquet
+      - figures/data/bootstrap/runs_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_2M.png:
+          cache: false
+
+  trendline_p50_runs_1M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_runs_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_1M.parquet
+      --token-budget 1000000
+      --success-percent 50
+      --title-label "Model-Estimated"
+      --output figures/out/trendline_p50_runs_1M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_runs_2M.parquet
+      - figures/data/bootstrap/runs_1M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_1M.png:
+          cache: false
+
+  # --- Trendlines: P80 ---
+  trendline_p80_runs_human_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --token-budget null
+      --success-percent 80
+      --title-label "Human-Derived"
+      --output figures/out/trendline_p80_runs_human_2M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p80_runs_human_2M.png:
+          cache: false
+
+  trendline_p80_runs_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline
+      --summaries figures/data/model_summaries_runs_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_2M.parquet
+      --token-budget null
+      --success-percent 80
+      --title-label "Model-Estimated"
+      --output figures/out/trendline_p80_runs_2M.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_runs_2M.parquet
+      - figures/data/bootstrap/runs_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p80_runs_2M.png:
+          cache: false
+
+  # --- Combined trendlines (linear + log side-by-side) ---
+  trendline_combined_human_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline_combined
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --output figures/out/trendline_p50_runs_human_2M_combined.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_human_2M_combined.png:
+          cache: false
+
+  trendline_combined_runs_2M:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.trendline_combined
+      --summaries figures/data/model_summaries_runs_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_2M.parquet
+      --output figures/out/trendline_p50_runs_2M_combined.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_summaries_runs_2M.parquet
+      - figures/data/bootstrap/runs_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/trendline_p50_runs_2M_combined.png:
+          cache: false
+
+  # --- IRT grid: completions-only variant ---
+  irt_grid_completions_only:
+    cmd: python -m figures.stages.irt_grid
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col completion_minutes
+      --title-label "Study Completions Only"
+      --output figures/out/irt_grid_completions_only.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - irt_grid
+        - output
+    plots:
+      - figures/out/irt_grid_completions_only.png:
+          cache: false
+
+  # --- Sensitivity deep-dive figures ---
+  plot_completions_only_comparison:
+    cmd: python -m figures.stages.plot_completions_only_comparison
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model "${frontier_models}"
+      --output figures/out/completions_only_comparison.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - frontier_models
+        - output
+    plots:
+      - figures/out/completions_only_comparison.png:
+          cache: false
+
+  plot_regularisation_comparison:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_regularisation_comparison
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --stats-output figures/data/regularisation_comparison.json
+      --output figures/out/regularisation_comparison.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - output
+    plots:
+      - figures/out/regularisation_comparison.png:
+          cache: false
+    outs:
+      - figures/data/regularisation_comparison.json
+
+  plot_bootstrap_models_example:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_bootstrap_models_example
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --output figures/out/bootstrap_models_example.png
+    wdir: ..
+    deps:
+      - lib/trendline.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - trendline
+        - irt.regularization
+        - output
+    plots:
+      - figures/out/bootstrap_models_example.png:
+          cache: false
+
+  # ===========================================================================
+  # Source-sensitivity analysis
+  # ===========================================================================
+  # Branches off the shared trunk: prepare_runs produces the headline parquets,
+  # then prepare_sensitivity_variants produces alternative runs_human parquets
+  # with different human_minutes sources. Each variant goes through the same
+  # fit_summaries → fit_trendline trunk stages that the headline uses.
+
+  prepare_sensitivity_variants:
+    cmd: python -m figures.stages.prepare_sensitivity_variants
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --human-snapshot figures/data/human_snapshot.json
+      --output-dir figures/data/sensitivity
+    wdir: ..
+    deps:
+      - lib/data.py
+      - lib/corrections.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/human_snapshot.json
+    outs:
+      # Source variants
+      - figures/data/sensitivity/runs_human_completions_only.parquet
+      - figures/data/sensitivity/runs_human_actuals_only.parquet
+      - figures/data/sensitivity/runs_human_no_cybench_fb.parquet
+      - figures/data/sensitivity/runs_human_cybench_adjusted.parquet
+      - figures/data/sensitivity/runs_human_no_cybergym.parquet
+      - figures/data/sensitivity/runs_human_no_cybench.parquet
+      - figures/data/sensitivity/runs_human_no_cvebench.parquet
+      - figures/data/sensitivity/runs_human_no_nyuctf.parquet
+      - figures/data/sensitivity/runs_human_no_intercode_ctf.parquet
+      - figures/data/sensitivity/runs_human_no_nl2bash.parquet
+      - figures/data/sensitivity/runs_human_no_cybashbench.parquet
+      - figures/data/sensitivity/runs_human_model_est_human_taskset.parquet
+      - figures/data/sensitivity/runs_human_model_est_full.parquet
+      # Participant (leave-one-expert-out) variants — anonymized labels
+      - figures/data/sensitivity/runs_human_no_expert_expert_01.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_02.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_03.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_04.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_05.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_06.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_07.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_08.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_09.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_10.parquet
+      - figures/data/sensitivity/sensitivity_summary.json
+
+  # --- Per-variant fit_summaries (same trunk as headline) ---
+  sensitivity_summaries:
+    foreach:
+      - completions_only
+      - actuals_only
+      - no_cybench_fb
+      - cybench_adjusted
+      - no_cybergym
+      - no_cybench
+      - no_cvebench
+      - no_nyuctf
+      - no_intercode_ctf
+      - no_nl2bash
+      - no_cybashbench
+    do:
+      cmd: ${dyld_prefix}
+        python -m figures.stages.fit_summaries
+        --assembled-runs figures/data/sensitivity/runs_human_${item}.parquet
+        --output figures/data/sensitivity/summaries_${item}.parquet
+      wdir: ..
+      deps:
+        - figures/stages/fit_summaries.py
+        - figures/stages/_sota.py
+        - lib/data.py
+        - figures/data/sensitivity/runs_human_${item}.parquet
+      params:
+        - figures/params.yaml:
+          - irt.regularization
+      outs:
+        - figures/data/sensitivity/summaries_${item}.parquet
+
+  # --- Per-variant fit_trendline (same trunk as headline) ---
+  # Uses headline bootstrap — acceptable when task set is the same and only
+  # human_minutes values change. For task-set variants (completions_only,
+  # no_cybergym, no_cybench), this is approximate but sufficient for
+  # point estimates. Full variant-specific bootstrap is a future extension.
+  sensitivity_trendlines:
+    foreach:
+      - completions_only
+      - actuals_only
+      - no_cybench_fb
+      - cybench_adjusted
+      - no_cybergym
+      - no_cybench
+      - no_cvebench
+      - no_nyuctf
+      - no_intercode_ctf
+      - no_nl2bash
+      - no_cybashbench
+    do:
+      cmd: ${dyld_prefix}
+        python -m figures.stages.fit_trendline
+        --summaries figures/data/sensitivity/summaries_${item}.parquet
+        --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+        --output figures/data/sensitivity/trendline_${item}.json
+      wdir: ..
+      deps:
+        - figures/stages/fit_trendline.py
+        - figures/data/sensitivity/summaries_${item}.parquet
+        - figures/data/bootstrap/runs_human_2M.parquet
+      outs:
+        - figures/data/sensitivity/trendline_${item}.json
+
+  # --- Collect all variant results into comparison table ---
+  sensitivity_comparison:
+    cmd: python -m figures.stages.sensitivity_comparison
+      --sensitivity-dir figures/data/sensitivity
+      --headline-trendline figures/data/trendline_params_human_2M.json
+      --headline-summaries figures/data/model_summaries_human_2M.parquet
+      --output figures/out/sensitivity_comparison.json
+    wdir: ..
+    deps:
+      - figures/data/sensitivity
+      - figures/data/trendline_params_human_2M.json
+      - figures/data/model_summaries_human_2M.parquet
+    outs:
+      - figures/out/sensitivity_comparison.json
+
+  # ===========================================================================
+  # Source-sensitivity multiverse (SLOW — full bootstrap × weighting sweep)
+  # ===========================================================================
+  # Combines our source variants with METR's standard uncertainty dimensions.
+  # Each variant gets a full distribution, enabling a proper multiverse boxplot.
+
+  sensitivity_multiverse:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.sensitivity_multiverse
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --sensitivity-dir figures/data/sensitivity
+      --n-samples ${multiverse.n_samples}
+      --frontier-model "${frontier_models}"
+      --output figures/data/sensitivity/multiverse_records.json
+    wdir: ..
+    deps:
+      - figures/stages/sensitivity_multiverse.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/sensitivity/runs_human_completions_only.parquet
+      - figures/data/sensitivity/runs_human_actuals_only.parquet
+      - figures/data/sensitivity/runs_human_no_cybench_fb.parquet
+      - figures/data/sensitivity/runs_human_cybench_adjusted.parquet
+      - figures/data/sensitivity/runs_human_no_cybergym.parquet
+      - figures/data/sensitivity/runs_human_no_cybench.parquet
+      - figures/data/sensitivity/runs_human_no_cvebench.parquet
+      - figures/data/sensitivity/runs_human_no_nyuctf.parquet
+      - figures/data/sensitivity/runs_human_no_intercode_ctf.parquet
+      - figures/data/sensitivity/runs_human_no_nl2bash.parquet
+      - figures/data/sensitivity/runs_human_no_cybashbench.parquet
+      - figures/data/sensitivity/runs_human_model_est_human_taskset.parquet
+      - figures/data/sensitivity/runs_human_model_est_full.parquet
+      # Participant (leave-one-expert-out) variants
+      - figures/data/sensitivity/runs_human_no_expert_expert_01.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_02.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_03.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_04.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_05.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_06.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_07.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_08.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_09.parquet
+      - figures/data/sensitivity/runs_human_no_expert_expert_10.parquet
+    params:
+      - figures/params.yaml:
+        - multiverse
+    outs:
+      - figures/data/sensitivity/multiverse_records.json
+
+  # Combined multiverse: merges source variants with METR's analytical dimensions
+  sensitivity_combined_multiverse:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.sensitivity_combined_multiverse
+      --source-records figures/data/sensitivity/multiverse_records.json
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --n-samples ${multiverse.n_samples}
+      --frontier-model "${frontier_models}"
+      --output figures/data/sensitivity/combined_multiverse_records.json
+    wdir: ..
+    deps:
+      - figures/stages/sensitivity_combined_multiverse.py
+      - figures/data/sensitivity/multiverse_records.json
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - multiverse
+        - frontier_models
+    outs:
+      - figures/data/sensitivity/combined_multiverse_records.json
+
+  # --- Multiverse boxplots ---
+  plot_sensitivity_multiverse:
+    cmd: python -m figures.stages.plot_sensitivity_multiverse
+      --records figures/data/sensitivity/multiverse_records.json
+      --output figures/out/sensitivity_multiverse_boxplot.png
+    wdir: ..
+    deps:
+      - figures/data/sensitivity/multiverse_records.json
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/sensitivity_multiverse_boxplot.png:
+          cache: false
+
+  plot_sensitivity_combined_multiverse:
+    cmd: python -m figures.stages.plot_sensitivity_multiverse
+      --records figures/data/sensitivity/combined_multiverse_records.json
+      --output figures/out/sensitivity_combined_multiverse.png
+    wdir: ..
+    deps:
+      - figures/data/sensitivity/combined_multiverse_records.json
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/sensitivity_combined_multiverse.png:
+          cache: false
+
+  # ===========================================================================
+  # Tables (JSON data for website rendering)
+  # ===========================================================================
+
+  table_datasets:
+    cmd: python -m figures.stages.table_datasets
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --output figures/data/datasets_table.json
+    wdir: ..
+    deps:
+      - figures/stages/table_datasets.py
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+    outs:
+      - figures/data/datasets_table.json
+
+  paper_stats:
+    cmd: python -m figures.stages.paper_stats
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --summaries-10m figures/data/model_summaries_human_2M_gpt53_10M.parquet
+      --summaries-model-est figures/data/model_summaries_runs_2M.parquet
+      --trendline figures/data/trendline_params_human_2M.json
+      --human-snapshot figures/data/human_snapshot.json
+      --token-subset-chart figures/out/charts/token_subset_analysis.json
+      --regularisation-chart figures/data/regularisation_comparison.json
+      --ten-m-cache figures/data/10m_samples.pkl
+      --token-budget-chart figures/out/charts/token_budget_sensitivity.json
+      --token-budget-extended-chart figures/out/charts/token_budget_extended_10m.json
+      --trendline-alt-chart figures/out/charts/trendline_alternatives.json
+      --os-trendline-chart figures/out/charts/os_main_trendline.json
+      --params figures/params.yaml
+      --output figures/data/paper_stats.json
+    wdir: ..
+    deps:
+      - figures/stages/paper_stats.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/model_summaries_human_2M_gpt53_10M.parquet
+      - figures/data/model_summaries_runs_2M.parquet
+      - figures/data/trendline_params_human_2M.json
+      - figures/data/human_snapshot.json
+      - figures/out/charts/token_subset_analysis.json
+      - figures/data/regularisation_comparison.json
+      - figures/data/10m_samples.pkl
+      - figures/out/charts/token_budget_sensitivity.json
+      - figures/out/charts/token_budget_extended_10m.json
+      - figures/out/charts/trendline_alternatives.json
+      - figures/out/charts/os_main_trendline.json
+    params:
+      - figures/params.yaml:
+        - projections
+    outs:
+      - figures/data/paper_stats.json
+
+  # --- ICC gauge figure (Appendix D) ---
+  plot_icc_gauge:
+    cmd: python -m figures.stages.plot_icc_gauge
+      --human-snapshot figures/data/human_snapshot.json
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --output figures/out/icc_gauge.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_icc_gauge.py
+      - figures/data/human_snapshot.json
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/icc_gauge.png:
+          cache: false
+
+  # --- ICC agreement figure (Appendix D) ---
+  plot_icc_agreement:
+    cmd: python -m figures.stages.plot_icc_agreement
+      --human-snapshot figures/data/human_snapshot.json
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --output figures/out/icc_agreement.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_icc_agreement.py
+      - figures/data/human_snapshot.json
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/icc_agreement.png:
+          cache: false
+
+  # --- Cross-source comparison figures (Appendix D) ---
+  plot_cross_source:
+    cmd: python -m figures.stages.plot_cross_source
+      --human-snapshot figures/data/human_snapshot.json
+      --best-available figures/data/best_available_times.json
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --output figures/out/cross_source_grid.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_cross_source.py
+      - figures/data/human_snapshot.json
+      - figures/data/best_available_times.json
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/cross_source_grid.png:
+          cache: false
+
+  # --- Source coverage figure ---
+  plot_source_coverage:
+    cmd: python -m figures.stages.plot_source_coverage
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --human-snapshot figures/data/human_snapshot.json
+      --output figures/out/source_coverage.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_source_coverage.py
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+      - figures/data/human_snapshot.json
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/source_coverage.png:
+          cache: false
+
+  # ===========================================================================
+  # Open-source model analysis figures
+  # ===========================================================================
+
+  # --- Class A: Trendline with OS annotations ---
+  os_main_trendline:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_os_trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --output figures/out/os_main_trendline.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_trendline.py
+      - figures/stages/_common_data.py
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - trendline
+        - output
+    plots:
+      - figures/out/os_main_trendline.png:
+          cache: false
+
+  os_main_trendline_zoomed:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_os_trendline
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --x-lim-start "2024-01-01"
+      --x-lim-end "2026-07-01"
+      --output figures/out/os_main_trendline_zoomed.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_trendline.py
+      - figures/stages/_common_data.py
+      - lib/trendline.py
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - trendline
+        - output
+    plots:
+      - figures/out/os_main_trendline_zoomed.png:
+          cache: false
+
+  # --- Class B: IRT-based OS analysis figures ---
+  os_trendline_buffer:
+    cmd: python -m figures.stages.plot_os_irt
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --figure trendline_buffer
+      --output figures/out/os_trendline_buffer.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_irt.py
+      - figures/stages/_common_data.py
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - irt
+        - output
+    plots:
+      - figures/out/os_trendline_buffer.png:
+          cache: false
+
+  os_scurve_overlay:
+    cmd: python -m figures.stages.plot_os_irt
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --figure scurve_overlay
+      --output figures/out/os_scurve_overlay.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_irt.py
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - irt
+        - output
+    plots:
+      - figures/out/os_scurve_overlay.png:
+          cache: false
+
+  os_gap_by_difficulty:
+    cmd: python -m figures.stages.plot_os_irt
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --figure gap_by_difficulty
+      --output figures/out/os_gap_by_difficulty.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_irt.py
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - irt
+        - output
+    plots:
+      - figures/out/os_gap_by_difficulty.png:
+          cache: false
+
+  os_benchmark_comparison:
+    cmd: python -m figures.stages.plot_os_irt
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --figure benchmark_comparison
+      --output figures/out/os_benchmark_comparison.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_os_irt.py
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - os_models
+        - irt
+        - output
+    plots:
+      - figures/out/os_benchmark_comparison.png:
+          cache: false
+
+  # --- Token analysis ---
+  plot_token_budget:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_token_budget
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --10m-samples figures/data/10m_samples.pkl
+      --os-cache figures/data/os_data_cache.pkl
+      --output figures/out/token_budget_sensitivity.png
+      --output-extended figures/out/token_budget_extended_10m.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/10m_samples.pkl
+      - figures/data/os_data_cache.pkl
+    params:
+      - figures/params.yaml:
+        - irt
+        - output
+    plots:
+      - figures/out/token_budget_sensitivity.png:
+          cache: false
+      - figures/out/token_budget_extended_10m.png:
+          cache: false
+
+  plot_token_subset_analysis:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_token_subset_analysis
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --ten-m-cache figures/data/10m_samples.pkl
+      --output figures/out/token_subset_analysis.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/data.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/10m_samples.pkl
+    params:
+      - figures/params.yaml:
+        - irt
+        - output
+    plots:
+      - figures/out/token_subset_analysis.png:
+          cache: false
+
+  # ===========================================================================
+  # 2024+ sensitivity (same pipeline, model-date-cutoff applied)
+  # ===========================================================================
+
+  sensitivity_multiverse_2024plus:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.sensitivity_multiverse
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --sensitivity-dir figures/data/sensitivity
+      --n-samples ${multiverse.n_samples}
+      --model-date-cutoff 2024-01-01
+      --frontier-model "${frontier_models}"
+      --output figures/data/sensitivity/multiverse_records_2024plus.json
+    wdir: ..
+    deps:
+      - figures/stages/sensitivity_multiverse.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/sensitivity/multiverse_records.json
+    params:
+      - figures/params.yaml:
+        - multiverse
+        - frontier_models
+    outs:
+      - figures/data/sensitivity/multiverse_records_2024plus.json
+
+  sensitivity_combined_multiverse_2024plus:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.sensitivity_combined_multiverse
+      --source-records figures/data/sensitivity/multiverse_records_2024plus.json
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --n-samples ${multiverse.n_samples}
+      --model-date-cutoff 2024-01-01
+      --frontier-model "${frontier_models}"
+      --output figures/data/sensitivity/combined_multiverse_records_2024plus.json
+    wdir: ..
+    deps:
+      - figures/stages/sensitivity_combined_multiverse.py
+      - figures/data/sensitivity/multiverse_records_2024plus.json
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - multiverse
+        - frontier_models
+    outs:
+      - figures/data/sensitivity/combined_multiverse_records_2024plus.json
+
+  # ===========================================================================
+  # Sensitivity dual plot (main publication figures)
+  # ===========================================================================
+
+  plot_sensitivity_dual:
+    cmd: python -m figures.stages.plot_sensitivity_dual
+      --records figures/data/sensitivity/combined_multiverse_records.json
+      --records-2024plus figures/data/sensitivity/combined_multiverse_records_2024plus.json
+      --source-records figures/data/sensitivity/multiverse_records.json
+      --frontier-label "${frontier_models}"
+      --stats-output figures/data/sensitivity_dual.json
+      --output figures/out/sensitivity_dual.png
+      --output-p50 figures/out/sensitivity_p50.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_sensitivity_dual.py
+      - figures/data/sensitivity/combined_multiverse_records.json
+      - figures/data/sensitivity/combined_multiverse_records_2024plus.json
+      - figures/data/sensitivity/multiverse_records.json
+    params:
+      - figures/params.yaml:
+        - frontier_models
+        - output
+    plots:
+      - figures/out/sensitivity_dual.png:
+          cache: false
+      - figures/out/sensitivity_p50.png:
+          cache: false
+    outs:
+      - figures/data/sensitivity_dual.json
+
+  # ===========================================================================
+  # Additional figures (missing from earlier DVC definition)
+  # ===========================================================================
+
+  plot_trendline_alternatives:
+    cmd: ${dyld_prefix}
+      python -m figures.stages.plot_trendline_alternatives
+      --model-runs figures/data/model_runs.parquet
+      --task-difficulties figures/data/task_difficulties.parquet
+      --difficulty-col best_available_minutes
+      --summaries figures/data/model_summaries_human_2M.parquet
+      --bootstrap figures/data/bootstrap/runs_human_2M.parquet
+      --stats-output figures/data/trendline_alternatives.json
+      --output figures/out/trendline_alternatives.png
+    wdir: ..
+    deps:
+      - lib/irt.py
+      - lib/trendline.py
+      - figures/data/model_runs.parquet
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_summaries_human_2M.parquet
+      - figures/data/bootstrap/runs_human_2M.parquet
+    params:
+      - figures/params.yaml:
+        - irt
+        - trendline
+        - output
+    plots:
+      - figures/out/trendline_alternatives.png:
+          cache: false
+    outs:
+      - figures/data/trendline_alternatives.json
+
+  plot_source_coverage_k2:
+    cmd: python -m figures.stages.plot_source_coverage
+      --task-difficulties figures/data/task_difficulties.parquet
+      --model-runs figures/data/model_runs.parquet
+      --human-snapshot figures/data/human_snapshot.json
+      --show-k2
+      --output figures/out/source_coverage_k2.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_source_coverage.py
+      - figures/data/task_difficulties.parquet
+      - figures/data/model_runs.parquet
+      - figures/data/human_snapshot.json
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/source_coverage_k2.png:
+          cache: false
+
+  plot_expert_effort:
+    cmd: python -m figures.stages.plot_expert_effort
+      --human-snapshot figures/data/human_snapshot.json
+      --best-available figures/data/best_available_times.json
+      --task-difficulties figures/data/task_difficulties.parquet
+      --output figures/out/expert_effort.png
+    wdir: ..
+    deps:
+      - figures/stages/plot_expert_effort.py
+      - figures/data/human_snapshot.json
+      - figures/data/best_available_times.json
+      - figures/data/task_difficulties.parquet
+    params:
+      - figures/params.yaml:
+        - output
+    plots:
+      - figures/out/expert_effort.png:
+          cache: false

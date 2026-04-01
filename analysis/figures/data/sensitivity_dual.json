@@ -1,0 +1,198 @@
+{
+  "headline_best_available": {
+    "dt_months": {
+      "median": 7.8,
+      "q25": 4.8,
+      "q75": 9.6,
+      "p10": 4.3,
+      "p90": 10.5,
+      "n": 996
+    },
+    "frontier_p50_hours": {
+      "median": 3.4,
+      "q25": 2.8,
+      "q75": 4.3,
+      "p10": 2.4,
+      "p90": 5.9,
+      "n": 624
+    }
+  },
+  "study_completions_only": {
+    "dt_months": {
+      "median": 5.4,
+      "q25": 3.9,
+      "q75": 7.7,
+      "p10": 2.8,
+      "p90": 10.0,
+      "n": 912
+    },
+    "frontier_p50_hours": {
+      "median": 7.0,
+      "q25": 3.1,
+      "q75": 38.1,
+      "p10": 1.8,
+      "p90": 2997.1,
+      "n": 572
+    }
+  },
+  "actuals_only_completions_first_blood_2_4": {
+    "dt_months": {
+      "median": 5.9,
+      "q25": 4.1,
+      "q75": 7.8,
+      "p10": 3.6,
+      "p90": 9.2,
+      "n": 971
+    },
+    "frontier_p50_hours": {
+      "median": 10.8,
+      "q25": 5.9,
+      "q75": 26.3,
+      "p10": 2.4,
+      "p90": 135.4,
+      "n": 618
+    }
+  },
+  "no_first_blood_times": {
+    "dt_months": {
+      "median": 7.5,
+      "q25": 4.7,
+      "q75": 9.3,
+      "p10": 4.2,
+      "p90": 10.3,
+      "n": 994
+    },
+    "frontier_p50_hours": {
+      "median": 3.9,
+      "q25": 3.1,
+      "q75": 5.7,
+      "p10": 2.6,
+      "p90": 11.0,
+      "n": 639
+    }
+  },
+  "model_estimates_human_task_set": {
+    "dt_months": {
+      "median": 5.6,
+      "q25": 4.6,
+      "q75": 6.8,
+      "p10": 4.2,
+      "p90": 7.3,
+      "n": 997
+    },
+    "frontier_p50_hours": {
+      "median": 3.2,
+      "q25": 2.4,
+      "q75": 5.1,
+      "p10": 2.0,
+      "p90": 11.8,
+      "n": 642
+    }
+  },
+  "model_estimates_full_task_set": {
+    "dt_months": {
+      "median": 6.4,
+      "q25": 5.3,
+      "q75": 7.2,
+      "p10": 4.6,
+      "p90": 7.9,
+      "n": 1000
+    },
+    "frontier_p50_hours": {
+      "median": 4.4,
+      "q25": 2.9,
+      "q75": 9.6,
+      "p10": 2.4,
+      "p90": 28.7,
+      "n": 641
+    }
+  },
+  "leave_one_benchmark_out": {
+    "dt_months": {
+      "median": 6.8,
+      "q25": 4.5,
+      "q75": 9.3,
+      "p10": 4.2,
+      "p90": 10.5,
+      "n": 6952
+    },
+    "frontier_p50_hours": {
+      "median": 3.4,
+      "q25": 2.8,
+      "q75": 4.4,
+      "p10": 2.3,
+      "p90": 6.9,
+      "n": 4494
+    }
+  },
+  "leave_one_expert_out": {
+    "dt_months": {
+      "median": 7.5,
+      "q25": 4.7,
+      "q75": 9.3,
+      "p10": 4.2,
+      "p90": 10.3,
+      "n": 9964
+    },
+    "frontier_p50_hours": {
+      "median": 3.4,
+      "q25": 2.8,
+      "q75": 4.4,
+      "p10": 2.3,
+      "p90": 6.3,
+      "n": 6381
+    }
+  },
+  "bootstrap_models": {
+    "dt_months": {
+      "median": 9.8,
+      "q25": 9.2,
+      "q75": 10.3,
+      "p10": 8.5,
+      "p90": 10.7,
+      "n": 1000
+    },
+    "frontier_p50_hours": {
+      "median": 3.1,
+      "q25": 3.1,
+      "q75": 3.1,
+      "p10": 3.1,
+      "p90": 3.1,
+      "n": 627
+    }
+  },
+  "weighting_regularisation": {
+    "dt_months": {
+      "median": 9.4,
+      "q25": 7.9,
+      "q75": 9.8,
+      "p10": 7.0,
+      "p90": 9.9,
+      "n": 12
+    },
+    "frontier_p50_hours": {
+      "median": 3.2,
+      "q25": 3.2,
+      "q75": 3.7,
+      "p10": 3.1,
+      "p90": 4.1,
+      "n": 12
+    }
+  },
+  "_source_range": {
+    "min": 5.4,
+    "max": 7.5
+  },
+  "_analytical_range": {
+    "min": 9.4,
+    "max": 9.8
+  },
+  "_source_p50_range": {
+    "min": 3.2,
+    "max": 10.8
+  },
+  "_loo_range": {
+    "min": 4.5,
+    "max": 8.6
+  }
+}

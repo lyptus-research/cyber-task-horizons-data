@@ -1,0 +1,10 @@
+date:
+  anthropic/claude-3-5-haiku-20241022: '2024-10-22'
+  anthropic/claude-3-5-sonnet-20240620: '2024-06-20'
+  anthropic/claude-3-5-sonnet-20241022: '2024-10-22'
+  google/gemini-2.5-pro-preview-06-05: '2025-06-05'
+  openai/davinci-002: '2020-07-11'
+  openai/gpt-3.5-turbo: '2022-03-15'
+  openai/gpt2-xl: '2019-11-05'
+  openai/o3-2025-04-16: '2025-04-16'
+  openai/o4-mini-2025-04-16: '2025-04-16'

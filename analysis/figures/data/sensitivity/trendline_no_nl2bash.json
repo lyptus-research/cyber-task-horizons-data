@@ -1,0 +1,50 @@
+{
+  "success_percent": 50,
+  "doubling_time_days": 301.2,
+  "doubling_time_months": 9.9,
+  "r_squared": 0.9541,
+  "slope": 0.0023011606808997576,
+  "intercept": -42.90783684823014,
+  "n_sota_models": 9,
+  "sota_models": [
+    "Claude 3 Opus",
+    "GPT-2",
+    "GPT-3",
+    "GPT-3.5",
+    "GPT-5.1 Codex Max",
+    "GPT-5.2 Codex",
+    "Opus 4",
+    "Opus 4.6",
+    "o3"
+  ],
+  "all_models": [
+    "Claude 3 Opus",
+    "DeepSeek V3.1",
+    "GLM-5",
+    "GPT-2",
+    "GPT-3",
+    "GPT-3.5",
+    "GPT-4o",
+    "GPT-5.1 Codex Max",
+    "GPT-5.2 Codex",
+    "GPT-5.3 Codex",
+    "Gemini 2.5 Pro",
+    "Opus 4",
+    "Opus 4.6",
+    "Sonnet 4.6",
+    "o3"
+  ],
+  "non_sota_models": [
+    "DeepSeek V3.1",
+    "GLM-5",
+    "GPT-4o",
+    "GPT-5.3 Codex",
+    "Gemini 2.5 Pro",
+    "Sonnet 4.6"
+  ],
+  "bootstrap_ci": {
+    "median_days": 287.2794318377304,
+    "ci_lower_days": 145.64962398121463,
+    "ci_upper_days": 340.86975045765223
+  }
+}

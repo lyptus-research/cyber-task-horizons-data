@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# DVC generated outputs
+analysis/figures/out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Environment
+.env
+
+# Eval log junk (backup files, temp files, Hawk metadata)
+*.eval.bak
+*.eval.Bbd*
+data/eval_logs/**/*.json
+data/eval_logs/**/*.yaml
+data/eval_logs/**/clean_eval_logs.py
+clean_eval_logs.py
+push_eval_logs.sh

@@ -1,0 +1,1202 @@
+{
+  "arvo:34299": {
+    "minutes": 43.7383462,
+    "source": "completion"
+  },
+  "back_to_the_past": {
+    "minutes": 52.24323469370715,
+    "source": "completion"
+  },
+  "arvo:46883": {
+    "minutes": 32.52307378333333,
+    "source": "completion"
+  },
+  "CVE-2024-3552": {
+    "minutes": 108.3910523750373,
+    "source": "completion"
+  },
+  "CVE-2024-36779": {
+    "minutes": 42.177736895371645,
+    "source": "completion"
+  },
+  "CVE-2023-37999": {
+    "minutes": 339.1469820833333,
+    "source": "completion"
+  },
+  "2023q-msc-linear_aggressor": {
+    "minutes": 25.30648561666667,
+    "source": "completion"
+  },
+  "2016q-rev-rock": {
+    "minutes": 23.842760695859027,
+    "source": "completion"
+  },
+  "nl2bash_complex/task_713": {
+    "minutes": 25.86877708333333,
+    "source": "completion"
+  },
+  "nl2bash_complex/task_712": {
+    "minutes": 3.7661099833333336,
+    "source": "completion"
+  },
+  "nl2bash_very_complex/task_711": {
+    "minutes": 1.3892121166666667,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_13": {
+    "minutes": 14.625404701431837,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_50": {
+    "minutes": 19.663896216666668,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_51": {
+    "minutes": 28.173608936168016,
+    "source": "completion"
+  },
+  "2016q-for-kill": {
+    "minutes": 5.031859800000001,
+    "source": "completion"
+  },
+  "arvo:49903": {
+    "minutes": 33.734176816666675,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_3": {
+    "minutes": 15.385069166666668,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_8": {
+    "minutes": 13.830597466666664,
+    "source": "completion"
+  },
+  "cybashbench_misc/contextual_024": {
+    "minutes": 1.6631092615367764,
+    "source": "completion"
+  },
+  "cybashbench_web/multistep_025": {
+    "minutes": 5.748797379425789,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_10": {
+    "minutes": 13.734969697872824,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_81": {
+    "minutes": 6.867839589665847,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_44": {
+    "minutes": 3.851927683333334,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_82": {
+    "minutes": 5.646657131546541,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_46": {
+    "minutes": 10.31694631666667,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_2": {
+    "minutes": 7.119663207670699,
+    "source": "completion"
+  },
+  "cybashbench_misc/multistep_030": {
+    "minutes": 3.4891869666666664,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_47": {
+    "minutes": 44.093592833333325,
+    "source": "completion"
+  },
+  "2013q-msc-networking_1": {
+    "minutes": 34.7661924,
+    "source": "completion"
+  },
+  "locktalk": {
+    "minutes": 274.16507964999994,
+    "source": "completion"
+  },
+  "cybashbench_misc/contextual_117": {
+    "minutes": 1.767943703387027,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_45": {
+    "minutes": 6.9477627250767515,
+    "source": "completion"
+  },
+  "cybashbench_reverse/nl2bash_004": {
+    "minutes": 1.1106673333333332,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_49": {
+    "minutes": 17.880952166666667,
+    "source": "completion"
+  },
+  "2021q-rev-checker": {
+    "minutes": 21.008854033333332,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_77": {
+    "minutes": 10.778188695285644,
+    "source": "completion"
+  },
+  "cybashbench_pwn/nl2bash_003": {
+    "minutes": 4.699879712569922,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_83": {
+    "minutes": 5.962007469154337,
+    "source": "completion"
+  },
+  "packedaway": {
+    "minutes": 4.416850716666667,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_006": {
+    "minutes": 0.7690835346474747,
+    "source": "completion"
+  },
+  "cybashbench_web/contextual_069": {
+    "minutes": 6.481974583333334,
+    "source": "completion"
+  },
+  "2017q-web-orange": {
+    "minutes": 47.094080666666656,
+    "source": "completion"
+  },
+  "flag_command": {
+    "minutes": 61.88407503333335,
+    "source": "completion"
+  },
+  "lootstash": {
+    "minutes": 5.839407755171455,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_14": {
+    "minutes": 8.87077594419871,
+    "source": "completion"
+  },
+  "cybashbench_forensics/nl2bash_005": {
+    "minutes": 0.7216382020826464,
+    "source": "completion"
+  },
+  "2023q-rev-baby_s_first": {
+    "minutes": 2.595671597196988,
+    "source": "completion"
+  },
+  "cybashbench_misc/prefixed_012": {
+    "minutes": 2.644045549486602,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_48": {
+    "minutes": 5.918178001369122,
+    "source": "completion"
+  },
+  "cybashbench_pwn/blanks_015": {
+    "minutes": 5.5364344,
+    "source": "completion"
+  },
+  "cybashbench_forensics/nl2bash_064": {
+    "minutes": 5.412931216666666,
+    "source": "completion"
+  },
+  "intercode-ctf_reverse/task_68": {
+    "minutes": 4.815956223884201,
+    "source": "completion"
+  },
+  "2018q-msc-short_circuit": {
+    "minutes": 133.53660783333336,
+    "source": "completion"
+  },
+  "cybashbench_reverse/contextual_063": {
+    "minutes": 2.157710616666667,
+    "source": "completion"
+  },
+  "cybashbench_crypto/multistep_026": {
+    "minutes": 5.430586233333333,
+    "source": "completion"
+  },
+  "cybashbench_pwn/prefixed_009": {
+    "minutes": 4.013574716666667,
+    "source": "completion"
+  },
+  "cybashbench_pwn/contextual_055": {
+    "minutes": 1.7717965666666666,
+    "source": "completion"
+  },
+  "cybashbench_misc/blanks_152": {
+    "minutes": 1.47227655,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_087": {
+    "minutes": 1.0148757833333333,
+    "source": "completion"
+  },
+  "cybashbench_web/blanks_167": {
+    "minutes": 0.5041302833333333,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_194": {
+    "minutes": 0.4585979333333333,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_067": {
+    "minutes": 3.6456571500000003,
+    "source": "completion"
+  },
+  "cybashbench_misc/mcq_239": {
+    "minutes": 0.5304983,
+    "source": "completion"
+  },
+  "cybashbench_web/contextual_088": {
+    "minutes": 3.0346712166666663,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_339": {
+    "minutes": 1.0439696833333334,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_186": {
+    "minutes": 0.5300063500000001,
+    "source": "completion"
+  },
+  "cybashbench_misc/nl2bash_320": {
+    "minutes": 0.5329836666666666,
+    "source": "completion"
+  },
+  "cybashbench_misc/mcq_209": {
+    "minutes": 0.5203330166666666,
+    "source": "completion"
+  },
+  "cybashbench_misc/mcq_229": {
+    "minutes": 0.5170092333333334,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_215": {
+    "minutes": 0.58598185,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_216": {
+    "minutes": 0.53998285,
+    "source": "completion"
+  },
+  "cybashbench_misc/blanks_034": {
+    "minutes": 0.5011665,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_237": {
+    "minutes": 0.6086459666666666,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_223": {
+    "minutes": 0.5343400166666666,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_17": {
+    "minutes": 1.9365262833333332,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_19": {
+    "minutes": 2.1106137666666664,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_22": {
+    "minutes": 15.417141949999998,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_24": {
+    "minutes": 2.4008246166666667,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_36": {
+    "minutes": 140.90849599999996,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_40": {
+    "minutes": 5.7593720333333325,
+    "source": "completion"
+  },
+  "cybashbench_web/nl2bash_001": {
+    "minutes": 1.5717690833333333,
+    "source": "completion"
+  },
+  "CVE-2024-2771": {
+    "minutes": 56.60615641666664,
+    "source": "completion"
+  },
+  "CVE-2024-31611": {
+    "minutes": 87.68404,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_18": {
+    "minutes": 1.2092602833333332,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_21": {
+    "minutes": 1.1544660333333332,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_23": {
+    "minutes": 1.2355213833333332,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_35": {
+    "minutes": 0.9439007666666667,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_4": {
+    "minutes": 0.8995461166666666,
+    "source": "completion"
+  },
+  "intercode-ctf_general_skills/task_11": {
+    "minutes": 1.6447198666666667,
+    "source": "completion"
+  },
+  "CVE-2024-3234": {
+    "minutes": 29.30498775,
+    "source": "completion"
+  },
+  "CVE-2024-3495": {
+    "minutes": 12.59087631666667,
+    "source": "completion"
+  },
+  "CVE-2024-5084": {
+    "minutes": 9.844049450000002,
+    "source": "completion"
+  },
+  "cybashbench_web/blanks_074": {
+    "minutes": 6.216522216666666,
+    "source": "completion"
+  },
+  "cybashbench_web/blanks_100": {
+    "minutes": 2.84264565,
+    "source": "completion"
+  },
+  "cybashbench_web/blanks_170": {
+    "minutes": 0.7915186166666667,
+    "source": "completion"
+  },
+  "cybashbench_web/blanks_171": {
+    "minutes": 0.5759161,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_195": {
+    "minutes": 1.0066694833333334,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_196": {
+    "minutes": 0.6176424833333333,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_197": {
+    "minutes": 0.61700815,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_199": {
+    "minutes": 0.99747515,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_214": {
+    "minutes": 0.6000094333333333,
+    "source": "completion"
+  },
+  "cybashbench_web/mcq_218": {
+    "minutes": 0.9433399666666666,
+    "source": "completion"
+  },
+  "arvo:50834": {
+    "minutes": 396.9719764666666,
+    "source": "censored"
+  },
+  "arvo:3848": {
+    "minutes": 482.74739021666664,
+    "source": "censored"
+  },
+  "rpgo": {
+    "minutes": 418.2948584333332,
+    "source": "censored"
+  },
+  "avatar": {
+    "minutes": 84.0,
+    "source": "first_blood"
+  },
+  "chunky": {
+    "minutes": 105.0,
+    "source": "first_blood"
+  },
+  "crushing": {
+    "minutes": 20.0,
+    "source": "first_blood"
+  },
+  "data_siege": {
+    "minutes": 78.0,
+    "source": "first_blood"
+  },
+  "delulu": {
+    "minutes": 60.0,
+    "source": "first_blood"
+  },
+  "diffecient": {
+    "minutes": 454.0,
+    "source": "first_blood"
+  },
+  "dynastic": {
+    "minutes": 6.0,
+    "source": "first_blood"
+  },
+  "eval_me": {
+    "minutes": 6.0,
+    "source": "first_blood"
+  },
+  "emaze": {
+    "minutes": 204.0,
+    "source": "first_blood"
+  },
+  "failproof": {
+    "minutes": 60.0,
+    "source": "first_blood"
+  },
+  "flecks_of_gold": {
+    "minutes": 368.0,
+    "source": "first_blood"
+  },
+  "frog_waf": {
+    "minutes": 330.0,
+    "source": "first_blood"
+  },
+  "it_has_begun": {
+    "minutes": 7.0,
+    "source": "first_blood"
+  },
+  "just_another_pickle_jail": {
+    "minutes": 244.0,
+    "source": "first_blood"
+  },
+  "labyrinth_linguist": {
+    "minutes": 30.0,
+    "source": "first_blood"
+  },
+  "missingbits": {
+    "minutes": 9.0,
+    "source": "first_blood"
+  },
+  "motp": {
+    "minutes": 20.0,
+    "source": "first_blood"
+  },
+  "network_tools": {
+    "minutes": 42.0,
+    "source": "first_blood"
+  },
+  "noisy_crc": {
+    "minutes": 35.0,
+    "source": "first_blood"
+  },
+  "noisier_crc": {
+    "minutes": 85.0,
+    "source": "first_blood"
+  },
+  "partial_tenacity": {
+    "minutes": 65.0,
+    "source": "first_blood"
+  },
+  "permuted": {
+    "minutes": 42.0,
+    "source": "first_blood"
+  },
+  "primary_knowledge": {
+    "minutes": 4.0,
+    "source": "first_blood"
+  },
+  "randsubware": {
+    "minutes": 356.0,
+    "source": "first_blood"
+  },
+  "robust_cbc": {
+    "minutes": 1494.0,
+    "source": "first_blood"
+  },
+  "shuffled_aes": {
+    "minutes": 159.0,
+    "source": "first_blood"
+  },
+  "skilift": {
+    "minutes": 3.0,
+    "source": "first_blood"
+  },
+  "slcg": {
+    "minutes": 29.0,
+    "source": "first_blood"
+  },
+  "sop": {
+    "minutes": 51.0,
+    "source": "first_blood"
+  },
+  "unbreakable": {
+    "minutes": 15.0,
+    "source": "first_blood"
+  },
+  "urgent": {
+    "minutes": 4.0,
+    "source": "first_blood"
+  },
+  "walking_to_the_sea_side": {
+    "minutes": 133.0,
+    "source": "first_blood"
+  },
+  "were_pickle_phreaks_revenge": {
+    "minutes": 120.0,
+    "source": "first_blood"
+  },
+  "2021q-for-lazy_leaks": {
+    "minutes": 5.656854249492381,
+    "source": "expert_estimate"
+  },
+  "nl2bash_simple/task_8202": {
+    "minutes": 0.7071067811865476,
+    "source": "expert_estimate"
+  },
+  "2013q-web-guess_harder": {
+    "minutes": 5.825901260487882,
+    "source": "expert_estimate"
+  },
+  "cybashbench_reverse/contextual_076": {
+    "minutes": 2.7682294565182874,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_53": {
+    "minutes": 3.363585661014858,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_94": {
+    "minutes": 14.564753151219701,
+    "source": "expert_estimate"
+  },
+  "2022q-cry-gotta_crack_them_all": {
+    "minutes": 84.85281374238568,
+    "source": "expert_estimate"
+  },
+  "arvo:59243": {
+    "minutes": 247.17205726885413,
+    "source": "expert_estimate"
+  },
+  "arvo:38393": {
+    "minutes": 169.70562748477138,
+    "source": "expert_estimate"
+  },
+  "arvo:28587": {
+    "minutes": 339.41125496954277,
+    "source": "expert_estimate"
+  },
+  "arvo:64859": {
+    "minutes": 169.70562748477138,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-34070": {
+    "minutes": 42.42640687119286,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-34716": {
+    "minutes": 84.85281374238568,
+    "source": "expert_estimate"
+  },
+  "arvo:5921": {
+    "minutes": 319.0977538166993,
+    "source": "expert_estimate"
+  },
+  "arvo:36861": {
+    "minutes": 266.9763351752434,
+    "source": "expert_estimate"
+  },
+  "2015q-web-k_stairs": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "2020f-web-picgram": {
+    "minutes": 27.386127875258303,
+    "source": "expert_estimate"
+  },
+  "2015q-rev-ftp": {
+    "minutes": 134.1640786499874,
+    "source": "expert_estimate"
+  },
+  "2020q-rev-ezbreezy": {
+    "minutes": 25.980762113533164,
+    "source": "expert_estimate"
+  },
+  "arvo:1065": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:781": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:67552": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:58452": {
+    "minutes": 360.00000000000006,
+    "source": "expert_estimate"
+  },
+  "arvo:64622": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "2023q-web-smug_dino": {
+    "minutes": 26.832815729997478,
+    "source": "expert_estimate"
+  },
+  "2019f-web-biometric": {
+    "minutes": 90.0,
+    "source": "expert_estimate"
+  },
+  "arvo:15120": {
+    "minutes": 388.84444190447147,
+    "source": "expert_estimate"
+  },
+  "arvo:55146": {
+    "minutes": 254.55844122715712,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_76": {
+    "minutes": 6.999999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:53183": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "arvo:24101": {
+    "minutes": 293.9387691339815,
+    "source": "expert_estimate"
+  },
+  "arvo:64574": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:65383": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:41356": {
+    "minutes": 419.99999999999994,
+    "source": "expert_estimate"
+  },
+  "2017q-for-missed_registration": {
+    "minutes": 15.0,
+    "source": "expert_estimate"
+  },
+  "2017q-rev-prophecy": {
+    "minutes": 146.96938456699075,
+    "source": "expert_estimate"
+  },
+  "2018q-rev-a_walk_through_x86_part_1": {
+    "minutes": 24.49489742783178,
+    "source": "expert_estimate"
+  },
+  "arvo:2828": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "2019q-rev-call_site": {
+    "minutes": 48.98979485566357,
+    "source": "expert_estimate"
+  },
+  "cybashbench_reverse/multistep_028": {
+    "minutes": 0.5,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_84": {
+    "minutes": 8.944271909999157,
+    "source": "expert_estimate"
+  },
+  "2020f-rev-rap": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "nl2bash_medium/task_6042": {
+    "minutes": 4.0,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-22120": {
+    "minutes": 224.49944320643644,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-35187": {
+    "minutes": 69.2820323027551,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-34359": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-3408": {
+    "minutes": 44.99999999999999,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-4323": {
+    "minutes": 64.80740698407861,
+    "source": "expert_estimate"
+  },
+  "2017q-rev-grumpcheck": {
+    "minutes": 97.21111047611784,
+    "source": "expert_estimate"
+  },
+  "2021q-pwn-alien_math": {
+    "minutes": 70.00000000000003,
+    "source": "expert_estimate"
+  },
+  "nl2bash_medium/task_549": {
+    "minutes": 6.999999999999999,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-36412": {
+    "minutes": 112.91589790636215,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_crypto/task_79": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "2016q-pwn-hungman": {
+    "minutes": 657.2670690061993,
+    "source": "expert_estimate"
+  },
+  "2022q-pwn-unsafe_linking": {
+    "minutes": 1440.0000000000005,
+    "source": "expert_estimate"
+  },
+  "2017f-pwn-humm_sch_t": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:18882": {
+    "minutes": 74.99999999999997,
+    "source": "expert_estimate"
+  },
+  "2020q-pwn-roppity": {
+    "minutes": 73.48469228349536,
+    "source": "expert_estimate"
+  },
+  "arvo:40674": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:57608": {
+    "minutes": 299.99999999999994,
+    "source": "expert_estimate"
+  },
+  "arvo:4161": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:52317": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "arvo:59207": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:6483": {
+    "minutes": 44.99999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:56037": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:47500": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:52006": {
+    "minutes": 44.99999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:55587": {
+    "minutes": 149.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:59602": {
+    "minutes": 90.0,
+    "source": "expert_estimate"
+  },
+  "arvo:23350": {
+    "minutes": 90.0,
+    "source": "expert_estimate"
+  },
+  "arvo:60842": {
+    "minutes": 149.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:8580": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:6993": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "oss-fuzz:42535042": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "CVE-2024-5452": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:20848": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:12662": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:57234": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:29633": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:11078": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "cybashbench_web/nl2bash_080": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_crypto/task_86": {
+    "minutes": 44.99999999999999,
+    "source": "expert_estimate"
+  },
+  "2016q-cry-sleeping_guard": {
+    "minutes": 19.999999999999996,
+    "source": "expert_estimate"
+  },
+  "2020q-cry-modus_operandi": {
+    "minutes": 44.99999999999999,
+    "source": "expert_estimate"
+  },
+  "2022q-cry-beyond_quantum": {
+    "minutes": 74.99999999999997,
+    "source": "expert_estimate"
+  },
+  "2019q-cry-super_curve": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "cybashbench_reverse/contextual_103": {
+    "minutes": 1.0,
+    "source": "expert_estimate"
+  },
+  "cybashbench_reverse/multistep_115": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "cybashbench_web/multistep_124": {
+    "minutes": 1.0,
+    "source": "expert_estimate"
+  },
+  "cybashbench_misc/nl2bash_129": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "nl2bash_simple/task_9729": {
+    "minutes": 4.0,
+    "source": "expert_estimate"
+  },
+  "nl2bash_simple/task_9317": {
+    "minutes": 4.999999999999999,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_6": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_25": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_26": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_27": {
+    "minutes": 3.0000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:10574": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:19902": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "arvo:16820": {
+    "minutes": 90.0,
+    "source": "expert_estimate"
+  },
+  "arvo:47392": {
+    "minutes": 293.9387691339815,
+    "source": "expert_estimate"
+  },
+  "arvo:59884": {
+    "minutes": 293.9387691339815,
+    "source": "expert_estimate"
+  },
+  "arvo:23619": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:10486": {
+    "minutes": 339.41125496954277,
+    "source": "expert_estimate"
+  },
+  "arvo:13741": {
+    "minutes": 379.4733192202053,
+    "source": "expert_estimate"
+  },
+  "arvo:14481": {
+    "minutes": 2159.999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:12420": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:18952": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:18070": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:18140": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:12818": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:14368": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:22140": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "arvo:62356": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:23653": {
+    "minutes": 59.999999999999986,
+    "source": "expert_estimate"
+  },
+  "arvo:28253": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:14619": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:15178": {
+    "minutes": 299.99999999999994,
+    "source": "expert_estimate"
+  },
+  "2018q-pwn-shellpointcode": {
+    "minutes": 49.99999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:25815": {
+    "minutes": 212.1320343559642,
+    "source": "expert_estimate"
+  },
+  "arvo:38870": {
+    "minutes": 169.70562748477138,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_33": {
+    "minutes": 10.000000000000002,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_general_skills/task_34": {
+    "minutes": 10.000000000000002,
+    "source": "expert_estimate"
+  },
+  "2023q-pwn-my_first_pwnie": {
+    "minutes": 6.999999999999999,
+    "source": "expert_estimate"
+  },
+  "arvo:29377": {
+    "minutes": 299.99999999999994,
+    "source": "expert_estimate"
+  },
+  "2017q-pwn-pilot": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:13730": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_70": {
+    "minutes": 12.247448713915889,
+    "source": "expert_estimate"
+  },
+  "arvo:19013": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_78": {
+    "minutes": 4.999999999999999,
+    "source": "expert_estimate"
+  },
+  "nl2bash_medium/task_7435": {
+    "minutes": 2.0,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_reverse/task_71": {
+    "minutes": 10.000000000000002,
+    "source": "expert_estimate"
+  },
+  "intercode-ctf_pwn/task_91": {
+    "minutes": 10.000000000000002,
+    "source": "expert_estimate"
+  },
+  "arvo:21960": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:21936": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:25377": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:12745": {
+    "minutes": 30.000000000000004,
+    "source": "expert_estimate"
+  },
+  "arvo:23077": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:46307": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:10252": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:3498": {
+    "minutes": 299.99999999999994,
+    "source": "expert_estimate"
+  },
+  "arvo:46279": {
+    "minutes": 360.00000000000006,
+    "source": "expert_estimate"
+  },
+  "arvo:5914": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:25332": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:5494": {
+    "minutes": 360.00000000000006,
+    "source": "expert_estimate"
+  },
+  "arvo:5992": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:13345": {
+    "minutes": 239.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:65531": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:44855": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:11523": {
+    "minutes": 299.99999999999994,
+    "source": "expert_estimate"
+  },
+  "arvo:41221": {
+    "minutes": 354.96478698597673,
+    "source": "expert_estimate"
+  },
+  "arvo:6336": {
+    "minutes": 84.85281374238568,
+    "source": "expert_estimate"
+  },
+  "arvo:26829": {
+    "minutes": 293.9387691339815,
+    "source": "expert_estimate"
+  },
+  "arvo:3736": {
+    "minutes": 317.4901573277508,
+    "source": "expert_estimate"
+  },
+  "arvo:44432": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:43268": {
+    "minutes": 424.2640687119285,
+    "source": "expert_estimate"
+  },
+  "arvo:51045": {
+    "minutes": 360.00000000000006,
+    "source": "expert_estimate"
+  },
+  "arvo:1236": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:3408": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:65820": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:1699": {
+    "minutes": 119.99999999999997,
+    "source": "expert_estimate"
+  },
+  "arvo:29243": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  },
+  "arvo:16541": {
+    "minutes": 180.0,
+    "source": "expert_estimate"
+  }
+}

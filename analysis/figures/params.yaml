@@ -1,0 +1,49 @@
+irt:
+  regularization: 0.00001  # C = 1/reg, matches METR 1.1
+  weighting: invsqrt_task_weight
+  success_percents: [50, 80]
+  confidence_level: 0.95
+  min_n: 5  # bins below this are drawn pale
+
+bootstrap:
+  n_iterations: 1000
+  seed: 42
+
+trendline:
+  # SOTA is determined programmatically from model_summaries.is_sota.
+  # No static non_frontier list.
+  x_lim_start: "2019-06-01"
+  x_lim_end: "2026-07-01"
+
+irt_grid:
+  exclude_models: []
+  # o1 and Haiku 4.5 excluded at data level (prepare_runs) — incomplete campaigns
+
+multiverse:
+  weightings: ["equal_task_weight", "invsqrt_task_weight"]
+  # C = 1/regularization. Range spans strong (C=5) to headline (C=100,000).
+  # METR's default sweep was [0.2, 0.1, 0.05, 0.02, 0.01] (C=5 to 100).
+  # We extend to include our headline value (0.00001 = C=100,000).
+  regularizations: [0.2, 0.1, 0.02, 0.01, 0.001, 0.00001]
+  n_samples: 1000
+
+os_models:
+  open_weight: ["GLM-5", "DeepSeek V3.1"]
+  comparison_set: ["GLM-5", "DeepSeek V3.1", "o3", "Opus 4", "GPT-5.3 Codex", "Opus 4.6"]
+  frontier_for_gap: ["GPT-5.3 Codex", "Opus 4.6"]
+
+frontier_models: "GPT-5.3 Codex,Opus 4.6"
+
+projections:
+  # Expert-sourced engagement duration estimates (display strings)
+  pentest_webapp_days: "5–8"
+  pentest_infra_days: "5–15"
+  pentest_redteam_days: "20+"
+  # Target hours for timeline projections
+  fullday_hours: 8       # 1 working day
+  multiday_hours: 40     # 5 working days
+  redteam_hours: 160     # 20 working days
+
+output:
+  dpi: 300
+  format: png

@@ -38,6 +38,7 @@ from lib.eval_sets import (  # noqa: E402
     GPT_51_CM_EVAL_SETS,
     GPT_52_EVAL_SETS,
     GPT_53_EVAL_SETS,
+    GPT_55_EVAL_SETS,
     O3_EVAL_SETS,
     OPUS_4_EVAL_SETS,
     OPUS_46_EVAL_SETS,
@@ -69,6 +70,11 @@ CAMPAIGNS = [
         "eval_sets": GPT_53_EVAL_SETS,
         "agent": "openai/gpt-5.3-codex",
         "alias": "GPT-5.3 Codex",
+    },
+    {
+        "eval_sets": GPT_55_EVAL_SETS,
+        "agent": "openai/gpt-5.5-2026-04-23",
+        "alias": "GPT-5.5",
     },
     {"eval_sets": O3_EVAL_SETS, "agent": "openai/o3-2025-04-16", "alias": "o3"},
     {

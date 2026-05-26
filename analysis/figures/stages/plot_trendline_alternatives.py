@@ -41,7 +41,9 @@ def _format_minutes(minutes):
         return f"{minutes:.1f}m"
     if minutes < 1440:
         return f"{minutes / 60:.1f}h"
-    return f"{minutes / 1440:.1f}d"
+    if minutes < 1440 * 365.25:
+        return f"{minutes / 1440:.1f}d"
+    return f"{minutes / (1440 * 365.25):.1f}y"
 
 
 def _hyperbolic_func(x, a, t_agi):
@@ -75,25 +77,31 @@ def _logistic_func(x, L, k, t0):
     return L / (1 + np.exp(-k * (x - t0)))
 
 
-def _fit_logistic(X, y):
+def _fit_logistic(X, y_log):
+    """Fit logistic growth in log-P50 space: log(P50(t)) = L / (1 + exp(-k*(t - t0))).
+
+    Consistent with _fit_hyperbolic which also works in log space. The ceiling L
+    is in log(minutes); convert to minutes via np.exp(L) for display.
+    R² is computed in log space, making it comparable to the exponential R².
+    """
     from scipy.optimize import curve_fit
 
     try:
         bounds = (
-            [y.max() * 0.5, 0, X.min().item()],
-            [y.max() * 100, np.inf, X.max().item() + 365 * 5],
+            [y_log.max(), 0, X.min().item()],
+            [y_log.max() + 10, np.inf, X.max().item() + 365 * 5],
         )
         params, _ = curve_fit(
             _logistic_func,
             X.flatten(),
-            y,
+            y_log,
             bounds=bounds,
-            p0=[y.max() * 2, 0.01, X.mean().item()],
+            p0=[y_log.max() + 2, 0.01, X.mean().item()],
             maxfev=20000,
         )
         y_pred = _logistic_func(X.flatten(), *params)
-        ss_res = np.sum((y - y_pred) ** 2)
-        ss_tot = np.sum((y - y.mean()) ** 2)
+        ss_res = np.sum((y_log - y_pred) ** 2)
+        ss_tot = np.sum((y_log - y_log.mean()) ** 2)
         r2 = 1 - ss_res / ss_tot
         return params, r2
     except Exception as e:
@@ -141,10 +149,11 @@ def _bootstrap_ci_band(bootstrap_df, sota_agents, release_dates_num, fit_type, x
                     pred[safe] = np.exp(_hyperbolic_func(x_range[safe], *params))
                     predictions[i] = pred
             elif fit_type == "logistic":
-                params, _ = _fit_logistic(X, y)
+                y_log = np.log(y.clip(1e-3))
+                params, _ = _fit_logistic(X, y_log)
                 if params is not None:
                     predictions[i] = np.clip(
-                        _logistic_func(x_range, *params), 1e-3, None
+                        np.exp(_logistic_func(x_range, *params)), 1e-3, None
                     )
         except Exception:
             continue
@@ -276,13 +285,14 @@ def compute(args, params) -> dict:
         else:
             zoom_fits["hyperbolic"] = {"r_squared": None, "singularity": None}
 
-        # Logistic
-        params_log, r2_log = _fit_logistic(X_sota.reshape(-1, 1), y_vals)
+        # Logistic (fit in log space — L is the log-minutes ceiling)
+        params_log, r2_log = _fit_logistic(X_sota.reshape(-1, 1), y_log)
         if params_log is not None:
+            ceiling_minutes = float(np.exp(params_log[0]))
             zoom_fits["logistic"] = {
                 "r_squared": round(float(r2_log), 3),
-                "ceiling_minutes": float(params_log[0]),
-                "ceiling_display": _format_minutes(params_log[0]),
+                "ceiling_minutes": ceiling_minutes,
+                "ceiling_display": _format_minutes(ceiling_minutes),
                 "inflection_date": num2date(params_log[2]).strftime("%B %Y"),
             }
         else:
@@ -417,7 +427,7 @@ def compute(args, params) -> dict:
                 ceiling = zoom_fits["logistic"].get("ceiling_minutes")
                 infl = zoom_fits["logistic"].get("inflection_date")
                 if params_log is not None:
-                    fit_y = _logistic_func(x_range, *params_log)
+                    fit_y = np.exp(_logistic_func(x_range, *params_log))
                     fit_dates = [num2date(x).strftime("%Y-%m-%d") for x in x_range]
                     panel["fit"] = {
                         "dates": fit_dates,

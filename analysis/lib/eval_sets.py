@@ -123,6 +123,48 @@ GPT_53_EVAL_SETS = {
 }
 
 # ---------------------------------------------------------------------------
+# GPT-5.5 campaign eval-sets (from docs/model-campaigns/gpt-5.5.md)
+#
+# 2M-ONLY baseline (mirrors GPT_53_EVAL_SETS pattern). Used by the standard
+# pipeline → model_runs.parquet → trendline + token-budget plots at pass@1.
+# The 50M reruns are loaded SEPARATELY (see GPT_55_50M_EVAL_SETS below or
+# gpt55_50m_reruns.json) by extended-budget code, never overlaid into the
+# canonical pipeline. This avoids mixing pass@N >= 2 results into the 2M
+# slot and breaking cross-model comparison.
+# ---------------------------------------------------------------------------
+
+GPT_55_EVAL_SETS = {
+    "cybashbench": ["eval-set-nmdr8jlgwoo6p6k2"],  # rerun 2026-05-19; 73/78 @ >=0.7 (93.6%).
+    "nl2bash": ["eval-set-0tzft0shxveixuhe"],  # rerun 2026-05-19; 9/9 @ >=0.7 (100%).
+    "intercode_ctf": ["eval-set-q2eavajb0blxpmc1"],  # 100%.
+    "nyuctf": ["eval-set-a3yica4ok4ag8nui"],  # 2M baseline only
+    "cybench": ["eval-set-9yv36t10vwzebrgl"],  # 100%.
+    "cvebench": ["eval-set-8o8jdzlzoh35frr3"],  # 2M baseline only
+    "cybergym": [
+        "eval-set-4uezp1ti730nnsmr",
+        "eval-set-9aqkor95b7j9a8bt",
+    ],  # 2M baseline + 2M credit-retry. NO 50M overlays.
+}
+
+# 50M reruns for GPT-5.5 - extended-budget data, loaded by extension code
+# only, never overlaid into the canonical model_runs.parquet.
+GPT_55_50M_EVAL_SETS = {
+    "nyuctf": [
+        "eval-set-anmfra3w3os3wzo5",
+        "eval-set-uoax7forfc0qc0ri",
+    ],
+    "cvebench": ["eval-set-cxv11jk9kwbqsyp1"],
+    "cybergym": [
+        "eval-set-d8ms2q1en0ctj1k5",
+        "eval-set-fmrn9ettelvc108q",
+        "eval-set-rd31u48n0r2wrfpm",
+        "eval-set-1limh4blc9gwto7k",
+        "eval-set-lsqvg4vhwlyalqqj",
+        "eval-set-morryc5nsrgn20f0",
+    ],
+}
+
+# ---------------------------------------------------------------------------
 # o3 campaign eval-sets (from docs/model-campaigns/o3.md)
 # All post-codification runs (reasoning_effort=high, reasoning_summary=detailed).
 # CyBench uses WL=7200 re-run (inference speed investigation showed WL=3600

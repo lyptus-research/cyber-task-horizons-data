@@ -273,21 +273,33 @@ def compute(args, params) -> dict:
                     )
                 ),
             },
-            "first_blood": {"tasks": n_fb},
-            "censored": {"tasks": n_cens},
+            "first_blood": {
+                "tasks": n_fb,
+                "hours": round(
+                    headline.loc[
+                        headline["task_id"].isin(headline_tasks)
+                        & headline["firstblood_minutes"].notna(),
+                        "firstblood_minutes",
+                    ].sum()
+                    / 60
+                ),
+            },
+            "censored": {
+                "tasks": n_cens,
+                "hours": round(
+                    sum(
+                        corrected_elapsed(s, TIMING_CORRECTIONS) / 3600
+                        for s in snapshot.get("censored", [])
+                        + snapshot.get("fails", [])
+                        if s["task_id"] in headline_tasks
+                        and s.get("skip_reason") == "too_difficult"
+                        and corrected_elapsed(s, TIMING_CORRECTIONS) > 0
+                    )
+                ),
+            },
             "total": {
                 "tasks": len(headline_tasks),
                 "hours": round(comp_hours + est_hours),
-                "effective_hours": round(
-                    comp_hours
-                    + sum(
-                        v / 60
-                        for t, v in task_estimate_minutes.items()
-                        if t in headline_tasks
-                        and "estimate" in task_sources.get(t, set())
-                        and pd.notna(v)
-                    )
-                ),
             },
         },
         "options": {
@@ -467,16 +479,23 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
     comp_hours = stats["completions"]["hours"]
     n_est = stats["estimates"]["tasks"]
     est_hours = stats["estimates"]["hours"]
+    est_eff = stats["estimates"].get("effective_hours", est_hours)
     n_fb = stats["first_blood"]["tasks"]
+    fb_hours = stats["first_blood"].get("hours", 0)
+    n_cens = stats["censored"]["tasks"]
+    cens_hours = stats["censored"].get("hours", 0)
     total_tasks = stats["total"]["tasks"]
-    total_hours = stats["total"]["hours"]
+    total_eff = comp_hours + est_eff + fb_hours + cens_hours
 
-    stats_text = (
-        f"Completions: {n_comp} tasks ({comp_hours:.0f}h)\n"
-        f"Estimates: {n_est} tasks ({est_hours:.0f}h)\n"
-        f"First-blood: {n_fb} tasks\n"
-        f"Total: {total_tasks} tasks ({total_hours:.0f}h)"
-    )
+    lines = [
+        f"Completions: {n_comp} tasks ({comp_hours:.0f}h)",
+        f"Estimates: {n_est} tasks ({est_eff:.0f}h)",
+        f"First-blood: {n_fb} tasks ({fb_hours:.0f}h)",
+    ]
+    if n_cens:
+        lines.append(f"Censored: {n_cens} tasks ({cens_hours:.0f}h)")
+    lines.append(f"Total: {total_tasks} tasks ({total_eff:.0f}h effective)")
+    stats_text = "\n".join(lines)
     ax.text(
         0.01,
         0.98,

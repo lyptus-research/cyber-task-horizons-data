@@ -1390,6 +1390,8 @@ def plot_gap_by_difficulty(
     # Plot gap for each OS model
     colors = ["#6d597a", "#457b9d"]  # plum, slate
     markers = ["s", "^"]
+    benches: list[str] = []
+    labels: list[str] = []
     for idx, alias in enumerate(os_models):
         data = campaign_data.get(alias)
         if data is None:
@@ -1408,6 +1410,21 @@ def plot_gap_by_difficulty(
             linewidth=2,
             markersize=8,
             label=alias,
+        )
+
+    if not benches:
+        # No OS models present in campaign_data - fall back to frontier bench order
+        benches = [b for b in _BENCH_ORDER if b in frontier_accs]
+        labels = [_BENCH_LABELS.get(b, b) for b in benches]
+        ax.text(
+            0.5,
+            0.5,
+            "No open-weight models in current campaign data",
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=11,
+            color="#999",
         )
 
     ax.set_xticks(range(len(benches)))

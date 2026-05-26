@@ -287,21 +287,40 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
             zorder=2,
         )
 
-        # Annotation (log panel only)
-        dt_2024_days = trendline_2024.get("doubling_time_days", 0)
-        if y_scale == "log" and dt_2024_days > 0:
-            ax.text(
-                0.98,
-                0.17,
-                f"2024+ doubling time: {dt_2024_days:.0f} days",
-                transform=ax.transAxes,
-                fontsize=14,
-                color=accent,
-                ha="right",
-                va="bottom",
-            )
+        # Annotations (log panel only)
+        if y_scale == "log":
+            line_idx = 0
+            dt_all_days = trendline.get("doubling_time_days", 0)
+            r2_all = trendline.get("r2", 0)
+            if dt_all_days > 0:
+                months_all = dt_all_days / 30.44
+                ax.text(
+                    0.98,
+                    0.08 + line_idx * 0.07,
+                    f"2019+ DT: {months_all:.1f} months (R\u00b2={r2_all:.2f})",
+                    transform=ax.transAxes,
+                    fontsize=11,
+                    color=teal,
+                    ha="right",
+                    va="bottom",
+                )
+                line_idx += 1
+            dt_2024_days = trendline_2024.get("doubling_time_days", 0)
+            if dt_2024_days > 0:
+                months_2024 = dt_2024_days / 30.44
+                ax.text(
+                    0.98,
+                    0.08 + line_idx * 0.07,
+                    f"2024+ DT: {months_2024:.1f} months",
+                    transform=ax.transAxes,
+                    fontsize=11,
+                    color=accent,
+                    ha="right",
+                    va="bottom",
+                )
 
     # Plot model points
+    frontier_labels = []
     for m in models:
         rd_str = m.get("release", "")
         if not rd_str:
@@ -344,16 +363,36 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
         )
 
         if m.get("frontier"):
-            ax.annotate(
-                m["name"],
-                (rd_mpl, p50),
-                textcoords="offset points",
-                xytext=(5, 8),
-                fontsize=7,
-                color=color,
-                alpha=0.8,
-                zorder=zorder + 1,
-            )
+            # Collect frontier points for smart label placement
+            frontier_labels.append((rd_mpl, p50, m["name"], color, zorder))
+
+    # Place labels with collision avoidance in offset-point space
+    frontier_labels.sort(key=lambda t: (t[0], t[1]))
+    placed = []  # list of (x_mpl, y_offset_pts) used so far
+    offsets_cycle = [(6, 12), (6, -14), (-6, 16), (-6, -18), (6, 22)]
+    for rd_mpl, p50, name, color, zorder in frontier_labels:
+        # Try each offset candidate, pick the first that doesn't collide
+        best_dx, best_dy = offsets_cycle[0]
+        for dx, dy in offsets_cycle:
+            collision = False
+            for px, py_off in placed:
+                if abs(rd_mpl - px) < 40 and abs(dy - py_off) < 14:
+                    collision = True
+                    break
+            if not collision:
+                best_dx, best_dy = dx, dy
+                break
+        placed.append((rd_mpl, best_dy))
+        ax.annotate(
+            name,
+            (rd_mpl, p50),
+            textcoords="offset points",
+            xytext=(best_dx, best_dy),
+            fontsize=7,
+            color=color,
+            alpha=0.8,
+            zorder=zorder + 1,
+        )
 
     # Y-scale formatting
     if y_scale == "log":

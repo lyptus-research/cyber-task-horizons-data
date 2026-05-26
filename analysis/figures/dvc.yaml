@@ -848,6 +848,7 @@ stages:
       --token-budget-extended-chart figures/out/charts/token_budget_extended_10m.json
       --trendline-alt-chart figures/out/charts/trendline_alternatives.json
       --os-trendline-chart figures/out/charts/os_main_trendline.json
+      --gpt55-50m-overlay figures/data/gpt55_50m_reruns.json
       --params figures/params.yaml
       --output figures/data/paper_stats.json
     wdir: ..
@@ -863,6 +864,7 @@ stages:
       - figures/out/charts/token_subset_analysis.json
       - figures/data/regularisation_comparison.json
       - figures/data/10m_samples.pkl
+      - figures/data/gpt55_50m_reruns.json
       - figures/out/charts/token_budget_sensitivity.json
       - figures/out/charts/token_budget_extended_10m.json
       - figures/out/charts/trendline_alternatives.json

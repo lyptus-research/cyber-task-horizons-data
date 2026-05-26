@@ -29,10 +29,10 @@ multiverse:
 
 os_models:
   open_weight: ["GLM-5", "DeepSeek V3.1"]
-  comparison_set: ["GLM-5", "DeepSeek V3.1", "o3", "Opus 4", "GPT-5.3 Codex", "Opus 4.6"]
-  frontier_for_gap: ["GPT-5.3 Codex", "Opus 4.6"]
+  comparison_set: ["GLM-5", "DeepSeek V3.1", "o3", "Opus 4", "GPT-5.3 Codex", "Opus 4.6", "GPT-5.5"]
+  frontier_for_gap: ["GPT-5.5", "Opus 4.6"]
 
-frontier_models: "GPT-5.3 Codex,Opus 4.6"
+frontier_models: "GPT-5.5,Opus 4.6"
 
 projections:
   # Expert-sourced engagement duration estimates (display strings)

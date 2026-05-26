@@ -17,6 +17,7 @@ the single source of truth for both the PNG and the interactive Plotly chart.
 
 import math
 import pickle
+import json
 import sys
 from pathlib import Path
 
@@ -61,6 +62,7 @@ BUDGETS = [
 ]
 
 STILL_RISING = {
+    "GPT-5.5",
     "Opus 4.6",
     "GPT-5.3 Codex",
     "Sonnet 4.6",
@@ -168,7 +170,13 @@ def compute(args, params) -> dict:
                 os_cache = pickle.load(f)
 
             extended_data = _compute_extended(
-                models, all_results, ratios, os_cache, ten_m_data
+                models,
+                all_results,
+                ratios,
+                campaign_data,
+                os_cache,
+                ten_m_data,
+                args.gpt55_50m_cache,
             )
         else:
             missing = []
@@ -247,8 +255,10 @@ def _compute_extended(
     models: list[str],
     all_results: dict[str, pd.DataFrame],
     ratios: dict[str, float],
+    campaign_data: dict[str, dict],
     os_cache: dict,
     ten_m_data: list[dict],
+    gpt55_50m_cache: str,
 ) -> dict | None:
     """Compute extended 10M token budget chart data for GPT-5.3."""
     # Build 10M task lookup
@@ -345,7 +355,28 @@ def _compute_extended(
                 "is_extended": True,
             }
         )
+
+    gpt55_ext = _compute_gpt55_50m_extension(
+        campaign_data.get("GPT-5.5", {}).get("runs"),
+        all_results,
+        gpt55_50m_cache,
+    )
+    if gpt55_ext is not None:
+        doubling_rows.insert(
+            0,
+            {
+                "alias": "GPT-5.5",
+                "budget_label": "50M retry overlay",
+                "p50_lo": gpt55_ext["last_2m_p50"],
+                "p50_hi": gpt55_ext["p50_50m"],
+                "ratio": gpt55_ext["ratio_2m_50m"],
+                "is_extended": True,
+            },
+        )
+
     for cm in sorted(chart_models, key=lambda x: x["ratio"], reverse=True):
+        if cm["alias"] in {"GPT-5.5"}:
+            continue
         doubling_rows.append(
             {
                 "alias": cm["alias"],
@@ -377,9 +408,60 @@ def _compute_extended(
                 "label_10m": f"GPT-5.3 at 10M ({ext_p50[-1] / 60:.1f}h)",
                 "p50_per_million": p50_per_million,
             },
+            "gpt55_extended": gpt55_ext,
             "doubling_rows": doubling_rows,
         },
         "options": {"title": "P50 time horizon vs token budget"},
+    }
+
+
+def _compute_gpt55_50m_extension(
+    runs_ext: pd.DataFrame | None,
+    all_results: dict[str, pd.DataFrame],
+    cache_path: str,
+) -> dict | None:
+    if runs_ext is None or len(runs_ext) == 0 or "GPT-5.5" not in all_results:
+        return None
+
+    path = Path(cache_path)
+    if not path.is_absolute():
+        path = _NOTEBOOKS_DIR / path
+    if not path.exists():
+        print(f"No GPT-5.5 50M cache at {path} - skipping 50M extension.")
+        return None
+
+    reruns = json.loads(path.read_text())
+    log2_vals = runs_ext["log2_human_minutes"].values
+    scores_base = runs_ext["score_binarized"].values
+    weights = (
+        runs_ext["invsqrt_task_weight"].values
+        if "invsqrt_task_weight" in runs_ext.columns
+        else None
+    )
+    budgets = [
+        2_250_000, 2_500_000, 2_750_000, 3_000_000, 3_500_000, 4_000_000, 4_500_000,
+        5_000_000, 10_000_000, 20_000_000, 30_000_000, 40_000_000, 50_000_000,
+    ]
+    p50_at = {}
+
+    for b in budgets:
+        sc = scores_base.copy()
+        for i, (_, row) in enumerate(runs_ext.iterrows()):
+            if sc[i] == 0 and row["task_id"] in reruns:
+                rr = reruns[row["task_id"]]
+                if rr["score"] >= 0.7 and rr["tokens"] <= b:
+                    sc[i] = 1
+        p50_log2, _, _ = fit_p50(log2_vals, sc, weights=weights)
+        p50_at[b] = float(2**p50_log2) if np.isfinite(p50_log2) else 0.0
+
+    last_2m = float(all_results["GPT-5.5"]["p50_minutes"].iloc[-1])
+    p50_50m = p50_at[50_000_000]
+    return {
+        "budgets_m": [b / 1e6 for b in budgets],
+        "p50_minutes": [round(p50_at[b], 2) for b in budgets],
+        "last_2m_p50": round(last_2m, 2),
+        "p50_50m": round(p50_50m, 2),
+        "ratio_2m_50m": round(p50_50m / last_2m, 2) if last_2m > 0 else 1.0,
     }
 
 
@@ -389,6 +471,8 @@ def _compute_extended(
 
 
 def _get_color(alias: str) -> str:
+    if alias == "GPT-5.5":
+        return COLORS["coral"]
     if alias in STILL_RISING:
         if alias in {"Opus 4.6", "GPT-5.3 Codex"}:
             return COLORS["teal_dark"]
@@ -397,6 +481,8 @@ def _get_color(alias: str) -> str:
 
 
 def _model_line_params(alias: str) -> dict:
+    if alias == "GPT-5.5":
+        return {"linewidth": 3.5, "markersize": 7, "zorder": 7}
     if alias in STILL_RISING:
         lw = 3 if alias in {"Opus 4.6", "GPT-5.3 Codex"} else 2
         ms = 6 if alias in {"Opus 4.6", "GPT-5.3 Codex"} else 4
@@ -419,8 +505,12 @@ def _place_endpoint_labels(ax, eps: list[tuple[str, float]]) -> None:
         placed.append((alias, log_p50 + offset))
 
         color = COLORS["teal"] if alias in STILL_RISING else "#999"
-        fs = 8.5 if alias in {"Opus 4.6", "GPT-5.3 Codex"} else 7.5
-        fw = "bold" if alias in {"Opus 4.6", "GPT-5.3 Codex"} else "normal"
+        fs = 8.5 if alias in {"GPT-5.5", "Opus 4.6", "GPT-5.3 Codex"} else 7.5
+        fw = (
+            "bold"
+            if alias in {"GPT-5.5", "Opus 4.6", "GPT-5.3 Codex"}
+            else "normal"
+        )
         display_y = 2 ** (log_p50 + offset)
         ax.annotate(
             alias,
@@ -485,20 +575,30 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
     ax1.set_yscale("log")
     ax1.set_xticks([0.05, 0.1, 0.2, 0.5, 1.0, 2.0])
     ax1.set_xticklabels(["50K", "100K", "200K", "500K", "1M", "2M"])
-    ax1.set_yticks([1, 2, 5, 10, 30, 60, 120, 240])
-    ax1.set_yticklabels(["1m", "2m", "5m", "10m", "30m", "1h", "2h", "4h"])
+    ax1.set_yticks([1, 2, 5, 10, 30, 60, 120, 240, 720])
+    ax1.set_yticklabels(["1m", "2m", "5m", "10m", "30m", "1h", "2h", "4h", "12h"])
     ax1.grid(alpha=0.2)
 
     # ---- Right panel: Paired dot plot (1M vs 2M) ----
 
-    sorted_models = sorted(models_data, key=lambda m: m["ratio"], reverse=True)
+    sorted_models = [
+        m
+        for m in sorted(models_data, key=lambda m: m["ratio"], reverse=True)
+        if m["ratio"] >= 1.15 or m["alias"] == "GPT-5.5"
+    ]
 
     for i, m in enumerate(sorted_models):
         alias = m["alias"]
         p1m = m["p50_1m"]
         p2m = m["p50_2m"]
         ratio = m["ratio"]
-        color = COLORS["teal"] if ratio >= 1.15 else "#c0c0c0"
+        color = (
+            COLORS["coral"]
+            if alias == "GPT-5.5"
+            else COLORS["teal"]
+            if ratio >= 1.15
+            else "#c0c0c0"
+        )
         y = len(sorted_models) - i - 1
 
         ax2.plot([p1m, p2m], [y, y], color=color, linewidth=2.5, zorder=3)
@@ -514,14 +614,14 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
             va="center",
             fontsize=8.5,
             color=color,
-            fontweight="bold" if ratio > 1.4 else "normal",
+            fontweight="bold" if ratio > 1.4 or alias == "GPT-5.5" else "normal",
         )
 
     ax2.set_xscale("log")
     ax2.set_xlabel("P50 time horizon")
     ax2.set_title("P50 gain from 1M to 2M tokens")
-    ax2.set_xticks([1, 5, 10, 30, 60, 120, 240])
-    ax2.set_xticklabels(["1m", "5m", "10m", "30m", "1h", "2h", "4h"])
+    ax2.set_xticks([1, 5, 10, 30, 60, 120, 240, 720, 1440])
+    ax2.set_xticklabels(["1m", "5m", "10m", "30m", "1h", "2h", "4h", "12h", "1d"])
     ax2.set_yticks([])
     ax2.grid(alpha=0.2, axis="x")
 
@@ -531,7 +631,8 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
             [0],
             marker="o",
             color="w",
-            markerfacecolor="#999",
+            markerfacecolor="#777",
+            markeredgecolor="#777",
             markersize=8,
             label="P50 at 1M tokens",
         ),
@@ -540,12 +641,20 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
             [0],
             marker="s",
             color="w",
-            markerfacecolor="#999",
+            markerfacecolor="#777",
+            markeredgecolor="#777",
             markersize=8,
             label="P50 at 2M tokens",
         ),
     ]
-    ax2.legend(handles=dot_legend, fontsize=8, loc="lower right")
+    ax2.legend(
+        handles=dot_legend,
+        fontsize=8,
+        loc="upper left",
+        frameon=True,
+        framealpha=0.9,
+        edgecolor="#ddd",
+    )
 
     plt.tight_layout()
     save_png(fig, output, params)
@@ -563,7 +672,10 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
 
     models_data = ext_data["data"]["models"]
     gpt53_ext = ext_data["data"]["gpt53_extended"]
+    gpt55_ext = ext_data["data"].get("gpt55_extended")
     doubling_rows = ext_data["data"]["doubling_rows"]
+    y_cap_minutes = 1_440.0
+    x_cap_minutes = 2_880.0
 
     fig, (ax_l, ax_r) = plt.subplots(
         1, 2, figsize=(16, 7), gridspec_kw={"width_ratios": [3, 2]}
@@ -589,10 +701,10 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
                 [2.0] + ext_bm,
                 [last_2m_p50] + ext_p50,
                 marker="s",
-                color=COLORS["coral"],
+                color=COLORS["teal_dark"],
                 linewidth=2.5,
                 markersize=6,
-                linestyle="-",
+                linestyle="--",
                 zorder=5,
             )
             if ext_p50:
@@ -603,10 +715,71 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
                     xytext=(6, 0),
                     fontsize=8.5,
                     fontweight="bold",
-                    color=COLORS["coral"],
+                    color=COLORS["teal_dark"],
                     va="center",
                     zorder=6,
                 )
+        elif alias == "GPT-5.5":
+            ax_l.plot(bm, p50, marker="o", color=c, **p)
+            if gpt55_ext is not None:
+                ext_bm = coerce_floats(gpt55_ext["budgets_m"])
+                ext_p50 = coerce_floats(gpt55_ext["p50_minutes"])
+                ext_p50_display = [min(v, y_cap_minutes) for v in ext_p50]
+                ax_l.plot(
+                    [2.0] + ext_bm,
+                    [gpt55_ext["last_2m_p50"]] + ext_p50_display,
+                    marker="s",
+                    color=COLORS["coral"],
+                    linewidth=3,
+                    markersize=6,
+                    linestyle="-",
+                    zorder=7,
+                )
+
+                # Highlight 2M / 10M / 50M budget milestones explicitly.
+                # 2M is annotated by the endpoint label - skip here to avoid
+                # collision with adjacent Opus 4.6 / GPT-5.3 Codex labels.
+                milestone_bm = {2.0: "2M", 10.0: "10M", 50.0: "50M"}
+                ext_lookup = dict(zip(ext_bm, ext_p50))
+                ext_lookup[2.0] = gpt55_ext["last_2m_p50"]
+                for mb, label in milestone_bm.items():
+                    if mb not in ext_lookup:
+                        continue
+                    p50_at = ext_lookup[mb]
+                    p50_display = min(p50_at, y_cap_minutes)
+                    # Larger ring marker on every milestone
+                    ax_l.plot(
+                        mb,
+                        p50_display,
+                        marker="o",
+                        markersize=14,
+                        markerfacecolor="none",
+                        markeredgecolor=COLORS["coral"],
+                        markeredgewidth=2,
+                        zorder=9,
+                    )
+                    if mb == 2.0:
+                        continue  # endpoint label already shows GPT-5.5 at 2M
+                    if p50_at >= y_cap_minutes:
+                        value_text = f"@ {label}: ≥1d ({p50_at / 60:.0f}h IRT)"
+                    elif p50_at >= 60:
+                        value_text = f"@ {label}: {p50_at / 60:.1f}h"
+                    else:
+                        value_text = f"@ {label}: {p50_at:.0f}m"
+                    y_off = {10.0: -22, 50.0: 14}[mb]
+                    x_off = {10.0: 0, 50.0: -6}[mb]
+                    ha = {10.0: "center", 50.0: "right"}[mb]
+                    ax_l.annotate(
+                        value_text,
+                        (mb, p50_display),
+                        textcoords="offset points",
+                        xytext=(x_off, y_off),
+                        fontsize=8.5,
+                        fontweight="bold",
+                        color=COLORS["coral"],
+                        ha=ha,
+                        zorder=10,
+                    )
         else:
             ax_l.plot(bm, p50, marker=marker, color=c, **p)
 
@@ -615,53 +788,99 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
     _place_endpoint_labels(ax_l, eps)
 
     ax_l.axvspan(1.0, 2.0, color=COLORS["teal"], alpha=0.07, zorder=0)
+    if gpt55_ext is not None:
+        ax_l.axvspan(2.0, 50.0, color=COLORS["coral"], alpha=0.04, zorder=0)
     ax_l.set_xlabel("Token budget")
     ax_l.set_ylabel("P50 time horizon")
     ax_l.set_title("P50 time horizon vs token budget")
     ax_l.set_xscale("log")
     ax_l.set_yscale("log")
-    ax_l.set_xticks([0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0])
-    ax_l.set_xticklabels(["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M"])
-    ax_l.set_yticks([1, 2, 5, 10, 30, 60, 120, 240, 360])
-    ax_l.set_yticklabels(["1m", "2m", "5m", "10m", "30m", "1h", "2h", "4h", "6h"])
+    ax_l.set_xticks([0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0])
+    ax_l.set_xticklabels(["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M", "50M"])
+    ax_l.set_yticks([1, 2, 5, 10, 30, 60, 120, 240, 360, 720, 1440, 2880])
+    ax_l.set_yticklabels(["1m", "2m", "5m", "10m", "30m", "1h", "2h", "4h", "6h", "12h", "1d", "2d"])
+    ax_l.set_ylim(1, y_cap_minutes * 1.2)
     ax_l.grid(alpha=0.2)
 
     # ---- Right panel: paired dots with GPT-5.3 extended rows ----
 
-    for i, dr in enumerate(doubling_rows):
-        y = len(doubling_rows) - i - 1
+    visible_rows = [
+        dr
+        for dr in doubling_rows
+        if dr["is_extended"]
+        or dr["alias"]
+        in {
+            "GPT-5.3 Codex",
+            "Opus 4.6",
+            "Sonnet 4.6",
+            "GPT-5.2 Codex",
+            "GPT-5.1 Codex Max",
+            "GLM-5",
+        }
+    ]
+
+    for i, dr in enumerate(visible_rows):
+        y = len(visible_rows) - i - 1
         p_lo = dr["p50_lo"]
         p_hi = dr["p50_hi"]
+        p_hi_display = min(p_hi, x_cap_minutes)
         ratio = dr["ratio"]
         is_extended = dr["is_extended"]
 
-        if is_extended:
+        if is_extended and dr["alias"] == "GPT-5.5":
+            color = COLORS["coral"]
+        elif is_extended:
+            color = COLORS["teal_dark"]
+        elif dr["alias"] == "GPT-5.5":
             color = COLORS["coral"]
         elif ratio >= 1.15:
             color = COLORS["teal"]
         else:
             color = "#c0c0c0"
 
-        ax_r.plot([p_lo, p_hi], [y, y], color=color, linewidth=2.5, zorder=3)
+        ax_r.plot([p_lo, p_hi_display], [y, y], color=color, linewidth=2.5, zorder=3)
         ax_r.plot(p_lo, y, "o", color=color, markersize=8, zorder=4)
-        ax_r.plot(p_hi, y, "s", color=color, markersize=8, zorder=4)
+        ax_r.plot(p_hi_display, y, "s", color=color, markersize=8, zorder=4)
 
         ratio_str = f"{ratio:.1f}x" if ratio >= 1.05 else "flat"
+        offscale = p_hi > x_cap_minutes
+        label_extra = " (off-scale)" if offscale else ""
+        is_gpt55_sat = dr["alias"] == "GPT-5.5" and is_extended
+        label_text = (
+            f"{dr['alias']}  saturated{label_extra}"
+            if is_gpt55_sat
+            else f"{dr['alias']}  {ratio_str}{label_extra}"
+        )
+        if is_gpt55_sat:
+            # Place to the LEFT of the line endpoint with right-anchored text
+            # so the saturated label always fits inside the chart.
+            label_x = p_lo / 1.15
+            label_ha = "right"
+        else:
+            label_x = min(max(p_lo, p_hi_display) * 1.15, x_cap_minutes * 0.82)
+            label_ha = "left"
         ax_r.text(
-            max(p_lo, p_hi) * 1.15,
+            label_x,
             y,
-            f"{dr['alias']}  {ratio_str}",
+            label_text,
             va="center",
+            ha=label_ha,
             fontsize=8.5,
             color=color,
-            fontweight="bold" if ratio > 1.4 or is_extended else "normal",
+            fontweight=(
+                "bold" if ratio > 1.4 or is_extended or dr["alias"] == "GPT-5.5" else "normal"
+            ),
         )
 
         # Budget range label on prominent lines
         if is_extended or dr["alias"] in {"GPT-5.3 Codex", "Opus 4.6"}:
             budget_label = dr.get("budget_label", "")
             if budget_label:
-                mid_x = (p_lo * p_hi) ** 0.5 if p_lo > 0 and p_hi > 0 else p_hi
+                mid_x = (
+                    (p_lo * p_hi_display) ** 0.5
+                    if p_lo > 0 and p_hi_display > 0
+                    else p_hi_display
+                )
                 ax_r.text(
                     mid_x,
                     y + 0.3,
@@ -674,15 +893,16 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
                 )
 
     # Separator between extended and 1M-2M rows
-    n_ext = sum(1 for dr in doubling_rows if dr["is_extended"])
-    sep_y = len(doubling_rows) - n_ext - 0.5
+    n_ext = sum(1 for dr in visible_rows if dr["is_extended"])
+    sep_y = len(visible_rows) - n_ext - 0.5
     ax_r.axhline(sep_y, color="#ddd", linewidth=1, linestyle="-")
 
     ax_r.set_xscale("log")
     ax_r.set_xlabel("P50 time horizon")
-    ax_r.set_title("P50 gain per budget doubling")
-    ax_r.set_xticks([1, 5, 10, 30, 60, 120, 240, 360])
-    ax_r.set_xticklabels(["1m", "5m", "10m", "30m", "1h", "2h", "4h", "6h"])
+    ax_r.set_title("P50 gain by budget slice")
+    ax_r.set_xticks([1, 5, 10, 30, 60, 120, 240, 360, 720, 1440, 2880])
+    ax_r.set_xticklabels(["1m", "5m", "10m", "30m", "1h", "2h", "4h", "6h", "12h", "1d", "2d"])
+    ax_r.set_xlim(0.8, x_cap_minutes)
     ax_r.set_yticks([])
     ax_r.grid(alpha=0.2, axis="x")
 
@@ -697,12 +917,26 @@ def render_extended_png(chart_data: dict, output: str, params: dict) -> None:
         Line2D(
             [0],
             [0],
+            color=COLORS["teal_dark"],
+            linewidth=2.5,
+            label="GPT-5.3 extended budget",
+        ),
+        Line2D(
+            [0],
+            [0],
             color=COLORS["coral"],
             linewidth=2.5,
-            label="Extended budget (GPT-5.3 only)",
+            label="GPT-5.5 50M retry overlay",
         ),
     ]
-    ax_r.legend(handles=dot_leg, fontsize=8, loc="lower right")
+    ax_r.legend(
+        handles=dot_leg,
+        fontsize=7.5,
+        loc="lower center",
+        bbox_to_anchor=(0.5, -0.18),
+        ncol=3,
+        frameon=False,
+    )
 
     plt.tight_layout()
     save_png(fig, output, params)
@@ -740,6 +974,11 @@ def main():
         "--output-extended",
         default=None,
         help="Output path for the extended 10M figure",
+    )
+    parser.add_argument(
+        "--gpt55-50m-cache",
+        default="../data/keep/gpt55_50m_reruns.json",
+        help="JSON cache of GPT-5.5 50M retry results",
     )
     args = parser.parse_args()
     params = load_params(args.params)

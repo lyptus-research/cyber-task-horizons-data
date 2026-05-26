@@ -4,7 +4,8 @@ Two panels:
   Left: Accuracy vs token budget for different task subsets
   Right: Cost per success vs token budget for different task subsets
 
-Uses GPT-5.3 Codex as the reference model (highest capability + 10M data).
+Defaults to GPT-5.3 Codex as the reference model. GPT-5.5 can be rendered with
+the local 50M retry eval logs overlaid above the 2M study budget.
 
 Architecture: compute() builds chart_data dict, save_chart_json() writes it,
 render_png() reads from the dict to produce matplotlib. The chart JSON is
@@ -12,6 +13,7 @@ the single source of truth for both the PNG and the interactive Plotly chart.
 """
 
 import sys
+import json
 from pathlib import Path
 
 import matplotlib
@@ -36,8 +38,21 @@ from lib.lyptus_style import apply_style, COLORS  # noqa: E402
 
 apply_style()
 
-MODEL = "GPT-5.3 Codex"
 PRICE_PER_TOKEN = 4.5 / 1e6  # GPT-5.1 Codex tier
+DEFAULT_MODEL = "GPT-5.3 Codex"
+GPT55_MODEL = "GPT-5.5"
+
+GPT55_50M_EVAL_SETS = [
+    "eval-set-d8ms2q1en0ctj1k5",  # cybergym pilot
+    "eval-set-cxv11jk9kwbqsyp1",  # cvebench pilot
+    "eval-set-anmfra3w3os3wzo5",  # nyuctf pilot
+    "eval-set-uoax7forfc0qc0ri",  # nyuctf residuals
+    "eval-set-fmrn9ettelvc108q",  # cybergym residual batch 1 / retries
+    "eval-set-rd31u48n0r2wrfpm",  # cybergym residual batch 2
+    "eval-set-1limh4blc9gwto7k",  # cybergym residual batch 3
+    "eval-set-lsqvg4vhwlyalqqj",  # cybergym residual batch 4
+    "eval-set-morryc5nsrgn20f0",  # cybergym residual batch 5
+]
 
 BUDGETS = [
     50_000,
@@ -58,6 +73,10 @@ BUDGETS = [
     8_000_000,
     9_000_000,
     10_000_000,
+    20_000_000,
+    30_000_000,
+    40_000_000,
+    50_000_000,
 ]
 
 SUBSETS = [
@@ -89,6 +108,7 @@ def compute(args, params) -> dict:
     """Load data, compute accuracy and cost at each budget for each subset."""
     from lib.data import assemble_runs
 
+    model = args.model
     mr = pd.read_parquet(
         Path(args.model_runs)
         if Path(args.model_runs).is_absolute()
@@ -100,18 +120,19 @@ def compute(args, params) -> dict:
         else _NOTEBOOKS_DIR / args.task_difficulties
     )
     runs_df = assemble_runs(mr, td, args.difficulty_col)
-    model_runs = runs_df[runs_df["alias"] == MODEL].copy()
+    model_runs = runs_df[runs_df["alias"] == model].copy()
 
     if len(model_runs) == 0:
         return {
             "chart_type": "tokenSubsetAnalysis",
             "version": 1,
-            "data": {"model": MODEL, "subsets": [], "study_budget_m": 2.0},
-            "options": {"title": f"{MODEL} token budget analysis by task subset"},
+            "data": {"model": model, "subsets": [], "study_budget_m": 2.0},
+            "options": {"title": f"{model} token budget analysis by task subset"},
         }
 
-    # Load 10M re-run data if available
-    task_10m = {}
+    # Load extended re-run data if available. GPT-5.3 uses the historical 10M
+    # pickle; GPT-5.5 uses local 50M Inspect eval logs from the residual push.
+    extended = {}
     if args.ten_m_cache:
         import pickle
 
@@ -124,11 +145,15 @@ def compute(args, params) -> dict:
             with open(cache_path, "rb") as f:
                 ten_m_data = pickle.load(f)
             for s in ten_m_data:
-                task_10m[s["task_id"]] = {
+                extended[s["task_id"]] = {
                     "score": s["score"],
                     "tokens": s["total_tokens"],
                 }
-            print(f"Loaded {len(task_10m)} 10M re-run samples")
+            print(f"Loaded {len(extended)} 10M re-run samples")
+
+    if args.gpt55_50m:
+        extended.update(_load_gpt55_50m_results(args.gpt55_50m_cache))
+        print(f"Loaded {len(extended)} GPT-5.5 50M re-run samples")
 
     # Compute accuracy and cost-per-success at each budget for each subset
     chart_subsets = []
@@ -157,11 +182,11 @@ def compute(args, params) -> dict:
                     tokens_used_list.append(tok)
                     if row["score_binarized"] == 1 and row["total_tokens"] <= b:
                         successes += 1
-                    elif row["score_binarized"] == 0 and row["task_id"] in task_10m:
-                        r10 = task_10m[row["task_id"]]
-                        if r10["score"] > 0 and r10["tokens"] <= b:
+                    elif row["score_binarized"] == 0 and row["task_id"] in extended:
+                        rerun = extended[row["task_id"]]
+                        if rerun["score"] > 0 and rerun["tokens"] <= b:
                             successes += 1
-                            extra = min(r10["tokens"], b) - row["total_tokens"]
+                            extra = min(rerun["tokens"], b) - row["total_tokens"]
                             if extra > 0:
                                 tokens_used_list[-1] += extra
                 tokens_used = pd.Series(tokens_used_list)
@@ -198,12 +223,73 @@ def compute(args, params) -> dict:
         "chart_type": "tokenSubsetAnalysis",
         "version": 1,
         "data": {
-            "model": MODEL,
+            "model": model,
             "subsets": chart_subsets,
             "study_budget_m": 2.0,
+            "extended_budget_m": 50.0 if args.gpt55_50m else 10.0 if extended else None,
         },
-        "options": {"title": f"{MODEL} token budget analysis by task subset"},
+        "options": {"title": f"{model} token budget analysis by task subset"},
     }
+
+
+def _load_gpt55_50m_results(cache_path: str) -> dict[str, dict]:
+    """Load latest GPT-5.5 50M retry result per task from canonical eval cache."""
+    json_path = Path(cache_path)
+    if not json_path.is_absolute():
+        json_path = _NOTEBOOKS_DIR / json_path
+    if json_path.exists():
+        return json.loads(json_path.read_text())
+
+    from inspect_ai.log import read_eval_log_samples
+
+    cache = _NOTEBOOKS_DIR.parent / "data" / ".eval-cache"
+    results = {}
+
+    for eval_set_id in GPT55_50M_EVAL_SETS:
+        eval_dir = cache / eval_set_id
+        if not eval_dir.exists():
+            continue
+
+        files = sorted(f for f in eval_dir.glob("*.eval") if f.name[:4].isdigit())
+        if not files:
+            files = sorted(eval_dir.glob("*.eval"))
+
+        for eval_file in files:
+            for sample in read_eval_log_samples(
+                str(eval_file), all_samples_required=False
+            ):
+                task_id = sample.id
+                if task_id.startswith("CVE-") and task_id.endswith("-one_day"):
+                    task_id = task_id[: -len("-one_day")]
+
+                score = _sample_score(sample)
+                tokens = _sample_total_tokens(sample)
+                if tokens is None:
+                    continue
+
+                results[task_id] = {
+                    "score": score,
+                    "tokens": tokens,
+                    "source": eval_set_id,
+                }
+
+    return results
+
+
+def _sample_score(sample) -> float:
+    if not sample.scores:
+        return 0.0
+    score = next(iter(sample.scores.values())).value
+    if isinstance(score, str):
+        return 1.0 if score == "C" else 0.0
+    return float(score or 0.0)
+
+
+def _sample_total_tokens(sample) -> int | None:
+    if not sample.model_usage:
+        return None
+    usage = next(iter(sample.model_usage.values()))
+    return int(usage.total_tokens)
 
 
 # =============================================================================
@@ -216,6 +302,7 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
     chart_subsets = chart_data["data"]["subsets"]
     model = chart_data["data"]["model"]
     study_budget_m = chart_data["data"].get("study_budget_m", 2.0)
+    extended_budget_m = chart_data["data"].get("extended_budget_m")
 
     if not chart_subsets:
         print(f"No data for {model}, skipping render")
@@ -275,13 +362,37 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
             va="bottom",
             rotation=90,
         )
+        if extended_budget_m and extended_budget_m > study_budget_m:
+            ax.axvline(
+                extended_budget_m,
+                color=COLORS["teal_dark"],
+                linestyle=":",
+                alpha=0.5,
+                linewidth=1,
+            )
+            ax.text(
+                extended_budget_m,
+                ax.get_ylim()[0],
+                "Extended budget",
+                color=COLORS["teal_dark"],
+                fontsize=8,
+                alpha=0.7,
+                ha="right",
+                va="bottom",
+                rotation=90,
+            )
 
     ax1.set_xlabel("Token budget")
     ax1.set_ylabel("Accuracy (%)")
     ax1.set_title(f"{model} accuracy by task subset")
     ax1.set_xscale("log")
-    ax1.set_xticks([0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0])
-    ax1.set_xticklabels(["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M"])
+    xticks = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0]
+    xlabels = ["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M"]
+    if extended_budget_m and extended_budget_m > 10.0:
+        xticks.extend([20.0, 50.0])
+        xlabels.extend(["20M", "50M"])
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels(xlabels)
     ax1.legend(fontsize=9)
     ax1.grid(alpha=0.2)
 
@@ -290,8 +401,8 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
     ax2.set_title(f"{model} cost per success by task subset")
     ax2.set_xscale("log")
     ax2.set_ylim(0, 50)
-    ax2.set_xticks([0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0])
-    ax2.set_xticklabels(["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M"])
+    ax2.set_xticks(xticks)
+    ax2.set_xticklabels(xlabels)
     ax2.legend(fontsize=9)
     ax2.grid(alpha=0.2)
 
@@ -309,7 +420,18 @@ def main():
     parser.add_argument("--model-runs", required=True)
     parser.add_argument("--task-difficulties", required=True)
     parser.add_argument("--difficulty-col", default="best_available_minutes")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--ten-m-cache", default=None, help="Path to 10M re-run cache")
+    parser.add_argument(
+        "--gpt55-50m",
+        action="store_true",
+        help="Overlay the local GPT-5.5 50M retry eval logs above the 2M budget",
+    )
+    parser.add_argument(
+        "--gpt55-50m-cache",
+        default="../data/keep/gpt55_50m_reruns.json",
+        help="JSON cache of GPT-5.5 50M retry results",
+    )
     args = parser.parse_args()
     params = load_params(args.params)
 

@@ -133,9 +133,14 @@ def compute(args, params) -> dict:
                 filter_sota=False,
             )
 
+            # Cap saturated P50 (e.g. GPT-5.5 IRT extrapolated 800+h)
+            # before trendline fit to avoid pulling DT to weeks.
+            SATURATION_CAP_MIN = 1440.0
+            capped = frontier_summaries.copy()
+            capped["p50"] = np.minimum(capped["p50"], SATURATION_CAP_MIN)
             reg, r2 = _metr_fit(
-                frontier_summaries["p50"],
-                pd.to_datetime(frontier_summaries["release_date"]),
+                capped["p50"],
+                pd.to_datetime(capped["release_date"]),
                 log_scale=True,
             )
             dt_days = (
@@ -168,9 +173,11 @@ def compute(args, params) -> dict:
     dt_recent_text = ""
 
     if len(sota_recent) >= 2:
+        capped_recent = sota_recent.copy()
+        capped_recent["p50"] = np.minimum(capped_recent["p50"], 1440.0)
         reg2, r2_2024 = _metr_fit(
-            sota_recent["p50"],
-            pd.to_datetime(sota_recent["release_date"]),
+            capped_recent["p50"],
+            pd.to_datetime(capped_recent["release_date"]),
             log_scale=True,
         )
         dt2_days = (
@@ -274,7 +281,9 @@ def _render_panel(ax, chart_data, y_scale, show_legend=True):
             zorder=2,
         )
 
-    # Plot model points
+    # Plot model points - cap display to keep IRT-saturated models on-chart
+    Y_CAP_MIN_COMBINED = 1440.0
+    frontier_labels = []
     for m in models:
         rd_str = m.get("release", "")
         if not rd_str:
@@ -282,59 +291,96 @@ def _render_panel(ax, chart_data, y_scale, show_legend=True):
         rd = datetime.strptime(rd_str, "%Y-%m-%d")
         rd_mpl = mdates.date2num(rd)
         p50 = m["p50"]
+        saturated = p50 > Y_CAP_MIN_COMBINED
+        p50_display = min(p50, Y_CAP_MIN_COMBINED)
 
-        if m.get("frontier"):
+        is_hero = m.get("name") == "GPT-5.5"
+        if is_hero:
+            color = "#ff5b5b"
+            alpha = 1.0
+            ms = 220
+            zorder = 15
+            marker = "*"
+        elif m.get("frontier"):
             color = PROVIDER_COLORS.get(m["provider"], "#999")
             alpha = 1.0
             ms = 80
             zorder = 5
+            marker = "o"
         else:
             color = "#cccccc"
             alpha = 0.5
             ms = 40
             zorder = 3
+            marker = "o"
 
         ax.scatter(
             [rd_mpl],
-            [p50],
+            [p50_display],
             s=ms,
             color=color,
             alpha=alpha,
             edgecolor="white",
-            linewidth=0.8,
+            linewidth=0.8 if not is_hero else 1.8,
+            marker=marker,
             zorder=zorder,
         )
 
-        ci_lo = m.get("ci_lo", p50 * 0.5)
-        ci_hi = m.get("ci_hi", p50 * 2.0)
-        ax.plot(
-            [rd_mpl, rd_mpl],
-            [ci_lo, ci_hi],
-            color=color,
-            alpha=alpha * 0.5,
-            linewidth=1.5,
-            zorder=zorder - 1,
-        )
-
-        if m.get("frontier"):
-            ax.annotate(
-                m["name"],
-                (rd_mpl, p50),
-                textcoords="offset points",
-                xytext=(5, 8),
-                fontsize=7,
+        if not saturated:
+            ci_lo = m.get("ci_lo", p50 * 0.5)
+            ci_hi = min(m.get("ci_hi", p50 * 2.0), Y_CAP_MIN_COMBINED)
+            ax.plot(
+                [rd_mpl, rd_mpl],
+                [ci_lo, ci_hi],
                 color=color,
-                alpha=0.8,
-                zorder=zorder + 1,
+                alpha=alpha * 0.5,
+                linewidth=1.5,
+                zorder=zorder - 1,
             )
+
+        if m.get("frontier") or is_hero:
+            label_name = (
+                "GPT-5.5 (saturated 2M/10M/50M)" if is_hero else m["name"]
+            )
+            frontier_labels.append(
+                (rd_mpl, p50_display, label_name, color, zorder)
+            )
+
+    # Place labels with collision avoidance
+    frontier_labels.sort(key=lambda t: (t[0], t[1]))
+    placed = []
+    offsets_cycle = [(6, 12), (6, -14), (-6, 16), (-6, -18), (6, 22)]
+    for rd_mpl, p50, name, color, zorder in frontier_labels:
+        best_dx, best_dy = offsets_cycle[0]
+        for dx, dy in offsets_cycle:
+            collision = False
+            for px, py_off in placed:
+                if abs(rd_mpl - px) < 40 and abs(dy - py_off) < 14:
+                    collision = True
+                    break
+            if not collision:
+                best_dx, best_dy = dx, dy
+                break
+        placed.append((rd_mpl, best_dy))
+        ax.annotate(
+            name,
+            (rd_mpl, p50),
+            textcoords="offset points",
+            xytext=(best_dx, best_dy),
+            fontsize=7,
+            color=color,
+            alpha=0.8,
+            zorder=zorder + 1,
+        )
 
     # Y-scale specific formatting
     if y_scale == "log":
         ax.set_yscale("log")
-        yticks = [1, 5, 10, 30, 60, 120, 240, 480]
-        ylabels = ["1m", "5m", "10m", "30m", "1h", "2h", "4h", "8h"]
+        yticks = [1, 5, 10, 30, 60, 120, 240, 480, 1440]
+        ylabels = ["1m", "5m", "10m", "30m", "1h", "2h", "4h", "8h", "1d"]
         ax.set_yticks(yticks)
         ax.set_yticklabels(ylabels)
+        ax.set_ylim(0.3, Y_CAP_MIN_COMBINED * 1.2)
 
         # DT annotations
         dt_all_text = options.get("dt_all_text", "")
@@ -366,16 +412,18 @@ def _render_panel(ax, chart_data, y_scale, show_legend=True):
                 va="bottom",
             )
 
-        # Annotate clipped error bars
+        # Annotate clipped error bars (cap displayed value at 24h)
         y_upper = ax.get_ylim()[1]
         for m in models:
             ci_hi_val = m.get("ci_hi", 0)
             if ci_hi_val > y_upper and m.get("release"):
                 rd = datetime.strptime(m["release"], "%Y-%m-%d")
                 rd_mpl = mdates.date2num(rd)
-                hours = ci_hi_val / 60
+                display_val = min(ci_hi_val, 24 * 60)
+                hours = display_val / 60
+                prefix = "≥" if ci_hi_val > 24 * 60 else ""
                 ax.annotate(
-                    f"{hours:.0f}h",
+                    f"{prefix}{hours:.0f}h",
                     xy=(rd_mpl, y_upper * 0.92),
                     fontsize=8,
                     fontfamily=FONT_SANS,
@@ -401,23 +449,27 @@ def _render_panel(ax, chart_data, y_scale, show_legend=True):
         ax.set_yticks(tick_mins)
         ax.set_yticklabels(tick_labels)
 
-        # Annotate clipped error bars
+        # Annotate clipped error bars (cap displayed value to keep label sane)
         y_upper = 480
         clipped = []
         for m in models:
             ci_hi_val = m.get("ci_hi", 0)
+            p50_val = m.get("p50", 0)
+            display_val = min(ci_hi_val, 24 * 60)  # cap at 24h
             if ci_hi_val > y_upper and m.get("release"):
                 rd = datetime.strptime(m["release"], "%Y-%m-%d")
-                hours = ci_hi_val / 60
-                clipped.append((rd, hours, m["name"]))
+                hours = display_val / 60
+                # If the actual value blew past 24h (saturated), append a ≥
+                prefix = "≥" if ci_hi_val > 24 * 60 else ""
+                clipped.append((rd, hours, m["name"], prefix))
 
         clipped.sort(key=lambda c: c[0])
-        offsets_xy = [(-20, 12), (20, 12)]
-        for i, (rd, hours, _agent) in enumerate(clipped):
+        offsets_xy = [(-20, 12), (20, 12), (0, 30)]
+        for i, (rd, hours, _agent, prefix) in enumerate(clipped):
             x_pos = mdates.date2num(rd)
             ox, oy = offsets_xy[i % len(offsets_xy)]
             ax.annotate(
-                f"{hours:.0f}h",
+                f"{prefix}{hours:.0f}h",
                 xy=(x_pos, y_upper),
                 fontsize=8,
                 fontfamily=FONT_SANS,

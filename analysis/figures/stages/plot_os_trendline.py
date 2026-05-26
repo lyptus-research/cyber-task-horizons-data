@@ -115,12 +115,15 @@ def compute(args, params) -> dict:
             p50s[agent] = (rd, p50_min)
 
     # Compute 2024+ trendline (used for buffer arrows)
+    # Cap individual P50s at SATURATION_CAP_MIN to prevent IRT-saturated
+    # models (e.g. GPT-5.5 with extrapolated 800+ h) from dragging the fit.
+    SATURATION_CAP_MIN = 1440.0  # 1 day
     cutoff_2024 = datetime(2024, 1, 1)
     sota_recent_days, sota_recent_log2 = [], []
     for agent, (rd, p50) in p50s.items():
         if agent not in non_frontier and p50 > 0 and rd >= cutoff_2024:
             sota_recent_days.append((rd - epoch).days)
-            sota_recent_log2.append(np.log2(p50))
+            sota_recent_log2.append(np.log2(min(p50, SATURATION_CAP_MIN)))
 
     trendline_2024 = {}
     dt_recent = float("inf")
@@ -253,7 +256,11 @@ def compute(args, params) -> dict:
                     for a in frontier_summaries["agent"]
                 ]
             )
-            ln_p50 = np.log(frontier_summaries["p50"].values)
+            # Cap saturated P50s before fitting (same rationale as 2024+ above)
+            capped_p50 = np.minimum(
+                frontier_summaries["p50"].values, SATURATION_CAP_MIN
+            )
+            ln_p50 = np.log(capped_p50)
             reg_full = LinearRegression().fit(days_arr.reshape(-1, 1), ln_p50)
             slope_full = reg_full.coef_[0]
             dt_days = np.log(2) / slope_full if slope_full > 0 else float("inf")
@@ -336,6 +343,11 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 7))
 
+    # Y-axis cap: IRT P50 explodes for near-saturated models (e.g. GPT-5.5)
+    # because the logistic crosses 50% only after the observed-task range.
+    # Cap display at 1440 min (1 day) and tag any model whose P50 exceeds that.
+    Y_CAP_MINUTES = 1440.0
+
     # Draw trendline CI band
     if "dates" in trendline and "ci_lower" in trendline:
         t_dates = [datetime.strptime(d, "%Y-%m-%d") for d in trendline["dates"]]
@@ -378,42 +390,77 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
         rd = datetime.strptime(rd_str, "%Y-%m-%d")
         rd_mpl = mdates.date2num(rd)
         p50 = m["p50"]
+        saturated = p50 > Y_CAP_MINUTES
+        p50_display = min(p50, Y_CAP_MINUTES)
 
         color = PROVIDER_COLORS.get(m["provider"], "#999")
+
+        # GPT-5.5 gets coral highlight (the campaign hero)
+        is_hero = m["name"] == "GPT-5.5"
+        marker_color = COLORS.get("coral", "#ff5b5b") if is_hero else color
+        marker_size = 240 if is_hero else 80
+        marker_alpha = 1.0 if is_hero else 0.5
+        marker_zorder = 15 if is_hero else 3
+        marker = "*" if is_hero else "o"
+        edge_color = "white" if is_hero else np.array([1, 1, 1, 0.7])
+        edge_lw = 2 if is_hero else 0.8
+
         ax.scatter(
             [rd_mpl],
-            [p50],
-            s=80,
-            color=color,
-            alpha=0.5,
-            edgecolor=np.array([1, 1, 1, 0.7]),
-            linewidth=0.8,
-            zorder=3,
+            [p50_display],
+            s=marker_size,
+            color=marker_color,
+            marker=marker,
+            alpha=marker_alpha,
+            edgecolor=edge_color,
+            linewidth=edge_lw,
+            zorder=marker_zorder,
         )
 
-        # Error bars
-        ci_lo = m.get("ci_lo", p50 * 0.5)
-        ci_hi = m.get("ci_hi", p50 * 2.0)
-        ax.plot(
-            [rd_mpl, rd_mpl],
-            [ci_lo, ci_hi],
-            color=color,
-            alpha=0.3,
-            linewidth=1.5,
-            zorder=2,
-        )
+        # Error bars (skip for saturated/hero — meaningless when extrapolated)
+        if not saturated and not is_hero:
+            ci_lo = m.get("ci_lo", p50 * 0.5)
+            ci_hi = m.get("ci_hi", p50 * 2.0)
+            ax.plot(
+                [rd_mpl, rd_mpl],
+                [ci_lo, min(ci_hi, Y_CAP_MINUTES)],
+                color=color,
+                alpha=0.3,
+                linewidth=1.5,
+                zorder=2,
+            )
 
         # Model label
-        if m.get("frontier"):
+        if m.get("frontier") or is_hero:
+            if is_hero:
+                hours = p50 / 60
+                label = (
+                    f"{m['name']} — saturated at 2M / 10M / 50M budgets\n"
+                    f"(P50 ≈ {hours:.0f}h, off-scale ↑)"
+                )
+                fs = 9
+                fw = "bold"
+                lc = COLORS.get("coral", "#ff5b5b")
+                offset = (-10, -18)
+                ha = "right"
+            else:
+                label = m["name"]
+                fs = 7
+                fw = "normal"
+                lc = color
+                offset = (5, 8)
+                ha = "left"
             ax.annotate(
-                m["name"],
-                (rd_mpl, p50),
+                label,
+                (rd_mpl, p50_display),
                 textcoords="offset points",
-                xytext=(5, 8),
-                fontsize=7,
-                color=color,
-                alpha=0.6,
-                zorder=4,
+                xytext=offset,
+                fontsize=fs,
+                fontweight=fw,
+                color=lc,
+                ha=ha,
+                alpha=1.0 if is_hero else 0.6,
+                zorder=16 if is_hero else 4,
             )
 
     # Plot OS models with large markers and buffer arrows
@@ -519,10 +566,11 @@ def render_png(chart_data: dict, output: str, params: dict) -> None:
         label.set_ha("right")
     ax.grid(alpha=0.15)
 
-    yticks = [1, 5, 10, 30, 60, 120, 240, 480]
-    ylabels = ["1m", "5m", "10m", "30m", "1h", "2h", "4h", "8h"]
+    yticks = [1, 5, 10, 30, 60, 120, 240, 480, 1440]
+    ylabels = ["1m", "5m", "10m", "30m", "1h", "2h", "4h", "8h", "1d"]
     ax.set_yticks(yticks)
     ax.set_yticklabels(ylabels)
+    ax.set_ylim(0.3, Y_CAP_MINUTES * 1.2)
 
     # Apply x-limits if zoomed
     x_start = options.get("x_lim_start")

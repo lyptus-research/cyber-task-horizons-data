@@ -1,1 +1,2 @@
 data/eval_logs/**/*.eval filter=lfs diff=lfs merge=lfs -text
+data/eval_logs/**/*.json filter=lfs diff=lfs merge=lfs -text

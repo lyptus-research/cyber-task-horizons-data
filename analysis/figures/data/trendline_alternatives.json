@@ -1,40 +1,40 @@
 {
   "full_range": {
     "exponential": {
-      "r_squared": 0.949,
-      "doubling_time_months": 9.8
+      "r_squared": 0.647,
+      "doubling_time_months": 7.5
     },
     "linear": {
-      "r_squared": 0.372
+      "r_squared": 0.098
     },
     "hyperbolic": {
-      "r_squared": 0.877,
-      "singularity": "February 2026"
+      "r_squared": 0.931,
+      "singularity": "April 2026"
     },
     "logistic": {
-      "r_squared": 0.91,
-      "ceiling_minutes": 19024.532467993646,
-      "ceiling_display": "13.2d",
-      "inflection_date": "October 2026"
+      "r_squared": 0.821,
+      "ceiling_minutes": 1117306884.909074,
+      "ceiling_display": "2124.3y",
+      "inflection_date": "August 2026"
     }
   },
   "zoomed_2024": {
     "exponential": {
-      "r_squared": 0.89,
-      "doubling_time_months": 5.7
+      "r_squared": 0.504,
+      "doubling_time_months": 2.9
     },
     "linear": {
-      "r_squared": 0.44
+      "r_squared": 0.197
     },
     "hyperbolic": {
-      "r_squared": 0.9,
-      "singularity": "March 2026"
+      "r_squared": 0.984,
+      "singularity": "April 2026"
     },
     "logistic": {
-      "r_squared": 0.88,
-      "ceiling_minutes": 19024.532473686795,
-      "ceiling_display": "13.2d",
-      "inflection_date": "October 2026"
+      "r_squared": 0.667,
+      "ceiling_minutes": 1137888418.62526,
+      "ceiling_display": "2163.5y",
+      "inflection_date": "July 2026"
     }
   }
 }

@@ -18,12 +18,3 @@ Thumbs.db
 
 # Environment
 .env
-
-# Eval log junk (backup files, temp files, Hawk metadata)
-*.eval.bak
-*.eval.Bbd*
-data/eval_logs/**/*.json
-data/eval_logs/**/*.yaml
-data/eval_logs/**/clean_eval_logs.py
-clean_eval_logs.py
-push_eval_logs.sh

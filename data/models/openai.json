@@ -126,6 +126,20 @@
         "reasoning_summary": "detailed"
       },
       "prompt_style": "research"
+    },
+    {
+      "provider": "openai",
+      "model_name": "gpt-5.5-2026-04-23",
+      "full_name": "openai/gpt-5.5-2026-04-23",
+      "release_date": "2026-04-23",
+      "max_output_tokens": 128000,
+      "description": "GPT-5.5 - flagship reasoning model. No codex variant released alongside. Long-context (>272K input) bills at higher tier. Reasoning OFF by default; requires prompt_style=research for refusal mitigation (mirrors 5.3 codex behavior).",
+      "alias": "GPT-5.5",
+      "thinking": {
+        "reasoning_effort": "xhigh",
+        "reasoning_summary": "detailed"
+      },
+      "prompt_style": "research"
     }
   ]
 }

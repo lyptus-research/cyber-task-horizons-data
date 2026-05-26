@@ -214,6 +214,11 @@ def main():
         default=None,
         help="token_budget_extended_10m.json chart data",
     )
+    parser.add_argument(
+        "--gpt55-50m-overlay",
+        default=None,
+        help="JSON of {task_id: {score, tokens}} from the 50M re-run pass",
+    )
     parser.add_argument("--params", default="figures/params.yaml")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
@@ -292,12 +297,17 @@ def main():
     top2 = summaries.nlargest(2, "p50")
     frontier_models = []
     for _, row in top2.iterrows():
+        ci_lo = float(row["p50q0.025"]) / 60
+        ci_hi = float(row["p50q0.975"]) / 60
         frontier_models.append(
             {
                 "name": row["agent"],
                 "p50_minutes": round(row["p50"], 1),
                 "p50_hours": round(row["p50"] / 60, 1),
                 "p50_display": _fmt_minutes_short(row["p50"]),
+                "ci_lo_hours": round(ci_lo, 1),
+                "ci_hi_hours": round(ci_hi, 1),
+                "ci_display": f"[{ci_lo:.1f}h, {ci_hi:.0f}h]",
             }
         )
 
@@ -611,6 +621,192 @@ def main():
             if p50pm:
                 ext_budget_stats["ext_p50_per_million"] = p50pm
 
+    # --- GPT-5.5 per-benchmark pass rate (2M single-attempt + 50M retry overlay) ---
+    # Used by the GPT-5.5 saturation note (May 2026). Subset = every task evaluated
+    # for GPT-5.5, not the headline human-labelled set, because the saturation claim
+    # is about model behaviour on the entire suite.
+    _BENCH_DISPLAY = {
+        "cybench": "CyBench",
+        "intercode_ctf": "InterCode-CTF",
+        "cybashbench": "CyBashBench",
+        "nl2bash": "NL2Bash",
+        "cvebench": "CVEBench",
+        "nyuctf": "NYUCTF",
+        "cybergym": "CyberGym",
+    }
+    def _pct_display(n: int, total: int) -> str:
+        """100% when integer, else one decimal (94.9%)."""
+        pct = 100 * n / total
+        return f"{int(pct)}%" if pct == int(pct) else f"{pct:.1f}%"
+
+    def _signed_pp(delta: float) -> str:
+        """Format pp delta with leading sign (+5.1pp, -3.0pp, 0pp)."""
+        if abs(delta) < 0.05:
+            return "0pp"
+        sign = "+" if delta > 0 else "-"
+        return f"{sign}{abs(delta):.1f}pp"
+
+    gpt55_per_benchmark = []
+    gpt55_overall = {}
+    g55 = model_runs[model_runs["alias"] == "GPT-5.5"].copy()
+    if len(g55):
+        overlay = {}
+        if args.gpt55_50m_overlay:
+            overlay_path = _resolve(args.gpt55_50m_overlay)
+            if overlay_path.exists():
+                with open(overlay_path) as f:
+                    overlay = json.load(f)
+        # 50M overlay: any rerun that passed (no token cap beyond what was budgeted).
+        g55["score_50m"] = g55["task_id"].astype(str).map(
+            lambda t: overlay.get(t, {}).get("score")
+        )
+        # 10M overlay: only count rerun pass if it used <= 10M tokens.
+        # Mirrors plot_gpt55_multi_budget_irt._build_gpt55_at_budget(..., 10_000_000).
+        def _score_10m(task_id: str) -> float | None:
+            rr = overlay.get(task_id)
+            if rr is None:
+                return None
+            if rr.get("tokens", 0) <= 10_000_000:
+                return rr.get("score")
+            return None
+        g55["score_10m"] = g55["task_id"].astype(str).map(_score_10m)
+        # Retry overlays never downgrade a 2M pass
+        g55["score_combined"] = g55[["score_binarized", "score_50m"]].max(axis=1)
+        g55["score_combined_10m"] = g55[["score_binarized", "score_10m"]].max(axis=1)
+
+        # Comparator per-bench rates — restricted to the GPT-5.5 task subset
+        # so deltas are apples-to-apples.
+        comparators = ["Opus 4.6", "GPT-5.3 Codex"]
+        comp_runs = {
+            c: model_runs[
+                (model_runs["alias"] == c)
+                & (model_runs["task_id"].isin(g55["task_id"]))
+            ]
+            for c in comparators
+        }
+
+        for fam, disp in _BENCH_DISPLAY.items():
+            sub = g55[g55["task_family"] == fam]
+            if not len(sub):
+                continue
+            total = int(len(sub))
+            pass1 = int(sub["score_binarized"].sum())
+            comb = int(sub["score_combined"].sum())
+            comb10 = int(sub["score_combined_10m"].sum())
+            row = {
+                "key": fam,
+                "name": disp,
+                "pass1_n": pass1,
+                "pass1_total": total,
+                "pass1_pct": round(100 * pass1 / total, 1),
+                "pass1_display": f"{_pct_display(pass1, total)} ({pass1}/{total})",
+                "pass1_pct_short": _pct_display(pass1, total),
+                "retry10m_n": comb10,
+                "retry10m_total": total,
+                "retry10m_pct": round(100 * comb10 / total, 1),
+                "retry10m_display": f"{_pct_display(comb10, total)} ({comb10}/{total})",
+                "retry10m_pct_short": _pct_display(comb10, total),
+                "retry50m_n": comb,
+                "retry50m_total": total,
+                "retry50m_pct": round(100 * comb / total, 1),
+                "retry50m_display": f"{_pct_display(comb, total)} ({comb}/{total})",
+                "retry50m_pct_short": _pct_display(comb, total),
+                "delta_50m_vs_2m_pp": round(100 * (comb - pass1) / total, 1),
+                "delta_50m_vs_2m_display": _signed_pp(100 * (comb - pass1) / total),
+            }
+            # Comparator rates (same task subset)
+            best_prior_pct = None
+            for c in comparators:
+                csub = comp_runs[c][comp_runs[c]["task_family"] == fam]
+                if not len(csub):
+                    row[f"{c.replace(' ', '_').replace('.', '_').replace('-', '_').lower()}_pct"] = None
+                    continue
+                cn = int(csub["score_binarized"].sum())
+                ct = int(len(csub))
+                cpct = round(100 * cn / ct, 1)
+                slug = c.replace(" ", "_").replace(".", "_").replace("-", "_").lower()
+                row[f"{slug}_pct"] = cpct
+                row[f"{slug}_pct_short"] = _pct_display(cn, ct)
+                row[f"{slug}_display"] = f"{_pct_display(cn, ct)} ({cn}/{ct})"
+                if best_prior_pct is None or cpct > best_prior_pct:
+                    best_prior_pct = cpct
+            if best_prior_pct is not None:
+                row["delta_vs_best_prior_pp"] = round(row["pass1_pct"] - best_prior_pct, 1)
+                row["delta_vs_best_prior_display"] = _signed_pp(row["pass1_pct"] - best_prior_pct)
+            gpt55_per_benchmark.append(row)
+        # Sort descending by 2M pass rate, ties broken by name
+        gpt55_per_benchmark.sort(key=lambda r: (-r["pass1_pct"], r["name"]))
+        total_all = int(len(g55))
+        pass1_all = int(g55["score_binarized"].sum())
+        comb_all = int(g55["score_combined"].sum())
+        comb10_all = int(g55["score_combined_10m"].sum())
+        retry_gain_pp = round(100 * (comb_all - pass1_all) / total_all, 1)
+        # Stochastic-vs-budget split (mirrors March note's 5.3 Codex 10M reporting).
+        # Stochastic = rerun passed using <=2M tokens (pass@2 with no budget benefit).
+        # Budget = rerun passed using >2M tokens (genuinely budget-constrained).
+        n_flipped = 0
+        n_stochastic = 0
+        n_budget = 0
+        for _, row in g55.iterrows():
+            if row["score_binarized"] == 1:
+                continue  # already passed at 2M
+            rr = overlay.get(str(row["task_id"]))
+            if rr is None or rr.get("score", 0) < 0.7:
+                continue
+            n_flipped += 1
+            if rr.get("tokens", 0) <= 2_000_000:
+                n_stochastic += 1
+            else:
+                n_budget += 1
+        gpt55_overall = {
+            "pass1_n": pass1_all,
+            "pass1_total": total_all,
+            "pass1_pct": round(100 * pass1_all / total_all, 1),
+            "pass1_display": f"{_pct_display(pass1_all, total_all)} ({pass1_all}/{total_all})",
+            "pass1_pct_short": _pct_display(pass1_all, total_all),
+            "retry10m_n": comb10_all,
+            "retry10m_total": total_all,
+            "retry10m_pct": round(100 * comb10_all / total_all, 1),
+            "retry10m_display": f"{_pct_display(comb10_all, total_all)} ({comb10_all}/{total_all})",
+            "retry10m_pct_short": _pct_display(comb10_all, total_all),
+            "retry50m_n": comb_all,
+            "retry50m_total": total_all,
+            "retry50m_pct": round(100 * comb_all / total_all, 1),
+            "retry50m_display": f"{_pct_display(comb_all, total_all)} ({comb_all}/{total_all})",
+            "retry50m_pct_short": _pct_display(comb_all, total_all),
+            "retry50m_overlay_tasks": len(overlay),
+            "retry_gain_pp": retry_gain_pp,
+            "rerun_total": len(overlay),
+            "rerun_passed": n_flipped,
+            "rerun_under_2m": n_stochastic,
+            "rerun_over_2m": n_budget,
+        }
+        # Comparator overall rates on the GPT-5.5 task subset (apples-to-apples with
+        # the per-benchmark comparator cells in the gpt55_per_benchmark table).
+        for c in comparators:
+            csub = comp_runs[c]
+            if not len(csub):
+                continue
+            cn = int(csub["score_binarized"].sum())
+            ct = int(len(csub))
+            slug = c.replace(" ", "_").replace(".", "_").replace("-", "_").lower()
+            gpt55_overall[f"{slug}_pct"] = round(100 * cn / ct, 1)
+            gpt55_overall[f"{slug}_pct_short"] = _pct_display(cn, ct)
+            gpt55_overall[f"{slug}_display"] = f"{_pct_display(cn, ct)} ({cn}/{ct})"
+
+        # Largest 50M gain benchmark — for prose hooks ("CyberGym shows the largest gain")
+        gains = [
+            (r["retry50m_n"] - r["pass1_n"], r) for r in gpt55_per_benchmark
+        ]
+        gains.sort(key=lambda x: -x[0])
+        if gains and gains[0][0] > 0:
+            top_n, top_row = gains[0]
+            gain_pp = round(100 * top_n / top_row["pass1_total"], 0)
+            remaining = top_row["retry50m_total"] - top_row["retry50m_n"]
+            gpt55_overall["largest_gain_benchmark"] = top_row["name"]
+            gpt55_overall["largest_gain_pp"] = int(gain_pp)
+            gpt55_overall["largest_gain_remaining_failures"] = remaining
+
     # --- R-squared for alternative trendline fits (from chart JSON) ---
     alt_fit_stats = {}
     if args.trendline_alt_chart:
@@ -708,6 +904,9 @@ def main():
         **ext_budget_stats,
         # R-squared for alternative trendline fits (full range)
         **alt_fit_stats,
+        # GPT-5.5 per-benchmark pass rate (saturation note)
+        "gpt55_per_benchmark": gpt55_per_benchmark,
+        "gpt55_overall": gpt55_overall,
         # Engagement duration estimates (expert-sourced, from params)
         "pentest_webapp_days": proj_params.get("pentest_webapp_days", "5–8"),
         "pentest_infra_days": proj_params.get("pentest_infra_days", "5–15"),

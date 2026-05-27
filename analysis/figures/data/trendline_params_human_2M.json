@@ -1,10 +1,10 @@
 {
   "success_percent": 50,
-  "doubling_time_days": 281.3,
-  "doubling_time_months": 9.2,
-  "r_squared": 0.9312,
-  "slope": 0.002464443622053251,
-  "intercept": -46.009119108565194,
+  "doubling_time_days": 281.7,
+  "doubling_time_months": 9.3,
+  "r_squared": 0.9308,
+  "slope": 0.0024608043259577205,
+  "intercept": -45.942011628451844,
   "n_sota_models": 10,
   "sota_models": [
     "Claude 3 Opus",
@@ -45,8 +45,8 @@
     "Sonnet 4.6"
   ],
   "bootstrap_ci": {
-    "median_days": 273.1463232085384,
-    "ci_lower_days": 138.23328280420188,
-    "ci_upper_days": 323.7311813204088
+    "median_days": 273.60765194694386,
+    "ci_lower_days": 138.25723818887968,
+    "ci_upper_days": 324.3776310436286
   }
 }

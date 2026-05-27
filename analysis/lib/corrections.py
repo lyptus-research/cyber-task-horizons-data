@@ -12,6 +12,31 @@ only the data instances.
 
 from .outliers import OutlierEntry, OutlierReason
 
+
+# UUID -> anonymized session label, loaded from the persisted public-export
+# mapping. After the snapshot was anonymized in place, session_ids in
+# completions/estimations are labels (session_001, ...) not UUIDs. To keep
+# EXCLUDED_SESSIONS and TIMING_CORRECTIONS firing against both forms, we
+# auto-mirror every UUID-keyed entry with its label twin at module load.
+def _load_session_label_map() -> dict[str, str]:
+    import json as _json
+    from pathlib import Path as _Path
+    path = _Path(__file__).resolve().parents[2] / "data" / "keep" / "anonymization_mapping.json"
+    if not path.exists():
+        return {}
+    with open(path) as f:
+        return _json.load(f).get("session_mapping", {})
+
+
+def _mirror_uuid_keys(d: dict) -> dict:
+    """Return a copy of d with each UUID key duplicated under its anonymized label."""
+    mapping = _load_session_label_map()
+    out = dict(d)
+    for uuid, label in mapping.items():
+        if uuid in d and label not in out:
+            out[label] = d[uuid]
+    return out
+
 # ---------------------------------------------------------------------------
 # Known outliers (tasks with bad data — exclude from all analysis)
 # ---------------------------------------------------------------------------
@@ -68,6 +93,9 @@ TIMING_CORRECTIONS: dict[str, float] = {
     # client_active_seconds and two independent docs.
     "session_369": 48 * 60,
 }
+# Mirror UUID keys to their anonymized labels so corrections fire whether
+# the snapshot still has raw UUIDs or has been anonymized in place.
+TIMING_CORRECTIONS = _mirror_uuid_keys(TIMING_CORRECTIONS)
 
 
 def compute_weights(df: "pd.DataFrame") -> "pd.DataFrame":
@@ -179,3 +207,4 @@ EXCLUDED_SESSIONS: dict[str, str] = {
     "session_148": "expert_04 arvo:29243: domain mismatch — anti-skill, low confidence (est 72h)",
     "session_166": "expert_04 arvo:16541: domain mismatch — anti-skill, low confidence (est 48h)",
 }
+EXCLUDED_SESSIONS = _mirror_uuid_keys(EXCLUDED_SESSIONS)

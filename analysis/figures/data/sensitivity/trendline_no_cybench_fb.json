@@ -1,11 +1,11 @@
 {
   "success_percent": 50,
-  "doubling_time_days": 289.6,
-  "doubling_time_months": 9.5,
-  "r_squared": 0.9506,
-  "slope": 0.0023938749691853546,
-  "intercept": -44.63013098516691,
-  "n_sota_models": 9,
+  "doubling_time_days": 273.2,
+  "doubling_time_months": 9.0,
+  "r_squared": 0.9336,
+  "slope": 0.0025367604926118574,
+  "intercept": -47.32764774191434,
+  "n_sota_models": 10,
   "sota_models": [
     "Claude 3 Opus",
     "GPT-2",
@@ -13,6 +13,7 @@
     "GPT-3.5",
     "GPT-5.1 Codex Max",
     "GPT-5.2 Codex",
+    "GPT-5.5",
     "Opus 4",
     "Opus 4.6",
     "o3"
@@ -28,6 +29,7 @@
     "GPT-5.1 Codex Max",
     "GPT-5.2 Codex",
     "GPT-5.3 Codex",
+    "GPT-5.5",
     "Gemini 2.5 Pro",
     "Opus 4",
     "Opus 4.6",
@@ -43,8 +45,8 @@
     "Sonnet 4.6"
   ],
   "bootstrap_ci": {
-    "median_days": 287.2794318377304,
-    "ci_lower_days": 145.64962398121463,
-    "ci_upper_days": 340.86975045765223
+    "median_days": 273.60765194694386,
+    "ci_lower_days": 138.25723818887968,
+    "ci_upper_days": 324.3776310436286
   }
 }
